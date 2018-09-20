@@ -3,7 +3,6 @@ package backend
 import (
 	"bytes"
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -13,12 +12,10 @@ import (
 )
 
 type MetricWriter struct {
-	Prefix         string
-	SourceOverride []string
+	prefix         string
+	sourceOverride []string
 	pool           *Pool
 }
-
-var sanitizedRegex = regexp.MustCompile("[^a-zA-Z\\d_.-]")
 
 var tagValueReplacer = strings.NewReplacer("\"", "\\\"", "*", "-")
 
@@ -30,9 +27,10 @@ type metricPoint struct {
 	Tags      map[string]string
 }
 
-func NewMetricWriter(host string) *MetricWriter {
+func NewMetricWriter(host, prefix string) *MetricWriter {
 	return &MetricWriter{
-		pool: NewPool(host),
+		pool:   NewPool(host),
+		prefix: prefix,
 	}
 }
 
@@ -70,16 +68,11 @@ func (w *MetricWriter) buildMetrics(ts *prompb.TimeSeries) []*metricPoint {
 	}
 	fieldName := strings.Replace(tags["__name__"], "_", ".", -1)
 	delete(tags, "__name__")
-	if w.Prefix != "" {
-		fieldName = w.Prefix + "." + fieldName
+	if w.prefix != "" {
+		fieldName = w.prefix + "." + fieldName
 	}
-	fieldName = sanitizedRegex.ReplaceAllLiteralString(fieldName, "-")
-
+	fieldName = sanitizeName(fieldName)
 	for _, value := range ts.Samples {
-		if w.Prefix != "" {
-
-		}
-
 		metric := &metricPoint{
 			Metric:    fieldName,
 			Timestamp: value.Timestamp,
@@ -122,7 +115,7 @@ func (w *MetricWriter) formatMetricPoint(metricPoint *metricPoint) string {
 
 	for k, v := range metricPoint.Tags {
 		buffer.WriteString(" ")
-		buffer.WriteString(sanitizedRegex.ReplaceAllLiteralString(k, "-"))
+		buffer.WriteString(sanitizeName(k))
 		buffer.WriteString("=\"")
 		buffer.WriteString(tagValueReplacer.Replace(v))
 		buffer.WriteString("\"")
@@ -132,4 +125,25 @@ func (w *MetricWriter) formatMetricPoint(metricPoint *metricPoint) string {
 
 	log.Debugf(buffer.String())
 	return buffer.String()
+}
+
+func sanitizeName(name string) string {
+	var sb *bytes.Buffer
+	for i, ch := range name {
+		if (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '.' || ch == '-' {
+			if sb != nil {
+				sb.WriteRune(ch)
+			}
+			continue
+		}
+		if sb == nil {
+			sb = bytes.NewBufferString(name[:i])
+		}
+		sb.WriteRune('-')
+	}
+	if sb == nil {
+		return name
+	} else {
+		return sb.String()
+	}
 }

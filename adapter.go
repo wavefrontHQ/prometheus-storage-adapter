@@ -1,8 +1,12 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
@@ -13,8 +17,33 @@ import (
 )
 
 func main() {
-	log.SetLevel(log.DebugLevel)
-	mw := backend.NewMetricWriter("localhost:2878")
+	var prefix string
+	var host string
+	var listen string
+	flag.StringVar(&prefix, "prefix", "", "Prefix for metric names. If omitted, no prefix is added.")
+	flag.StringVar(&host, "proxy", "", "Address to wavefront proxy on the form 'hostname:port'.")
+	flag.StringVar(&listen, "listen", "", "Port/address to listen to on the format '[address:]port'. If no address is specified, the adapter listens to all interfaces.")
+	debug := flag.Bool("debug", false, "Print detailed debug messages.")
+	//help := flag.Bool("help", false, "Print helpful information and exit.")
+	flag.Parse()
+
+	if host == "" {
+		fmt.Fprintln(os.Stderr, "Proxy address must be specified using the -proxy flag.")
+		os.Exit(1)
+	}
+
+	if listen == "" {
+		fmt.Fprintln(os.Stderr, "Listening port must be specified using the -listen flag.")
+		os.Exit(1)
+	}
+	if !strings.Contains(listen, ":") {
+		listen = ":" + listen
+	}
+
+	if *debug {
+		log.SetLevel(log.DebugLevel)
+	}
+	mw := backend.NewMetricWriter(host, prefix)
 	http.HandleFunc("/receive", func(w http.ResponseWriter, r *http.Request) {
 		compressed, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -41,5 +70,5 @@ func main() {
 		}
 	})
 
-	log.Fatal(http.ListenAndServe(":1234", nil))
+	log.Fatal(http.ListenAndServe(listen, nil))
 }
