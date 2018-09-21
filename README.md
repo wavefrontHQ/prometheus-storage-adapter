@@ -47,9 +47,9 @@ To run the adapter listening to port 1234 and sending results to localhost:2878,
 ```
 
 ## Running the adapter in a Docker container
-The adapter is available as a Docker image. To run it, simply type ```docker run <TODO: Name of repo>``` with the parameters discussed above, for example:
+The adapter is available as a Docker image. To run it, simply type ```docker run wavefronthq/prometheus-storage-adapter``` with the parameters discussed above, for example:
 ```
-docker run <TODO: Name of repo> -proxy localhost -proxy-port 2878 -listen 1234 -prefix prom
+docker run wavefronthq/prometheus-storage-adapter -proxy localhost -proxy-port 2878 -listen 1234 -prefix prom
 ```
 
 ## Integrating with Prometheus
