@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/prometheus/prometheus/prompb"
+	log "github.com/sirupsen/logrus"
 )
 
 type MetricWriter struct {

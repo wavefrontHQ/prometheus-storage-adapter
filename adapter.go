@@ -12,8 +12,8 @@ import (
 	"github.com/golang/snappy"
 	"github.com/wavefrontHQ/prometheus-storage-adapter/backend"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/prometheus/prometheus/prompb"
+	log "github.com/sirupsen/logrus"
 )
 
 func parseTags(s string) map[string]string {
