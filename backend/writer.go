@@ -3,6 +3,7 @@ package backend
 import (
 	"bufio"
 	"bytes"
+	"math"
 	"strconv"
 	"strings"
 
@@ -69,6 +70,12 @@ func (w *MetricWriter) writeMetrics(wrt *bufio.Writer, ts *prompb.TimeSeries) er
 	}
 	fieldName = sanitizeName(fieldName)
 	for _, value := range ts.Samples {
+		// Prometheus sometimes sends NaN samples. We interpret them as
+		// missing data and simply skip them.
+		if math.IsNaN(value.Value) {
+			continue
+		}
+
 		metric := &metricPoint{
 			Metric:    fieldName,
 			Timestamp: value.Timestamp,
