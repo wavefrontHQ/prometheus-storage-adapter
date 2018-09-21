@@ -10,7 +10,7 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
-	"github.com/wavefrontHQ/prometheus-storage-adapter/backend"
+	"github.com/wavefronthq/prometheus-storage-adapter/backend"
 
 	"github.com/prometheus/prometheus/prompb"
 	log "github.com/sirupsen/logrus"
