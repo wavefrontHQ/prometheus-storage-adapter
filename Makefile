@@ -11,7 +11,7 @@ BINARY_LINUX=$(TARGET)/$(BINARY_NAME)_linux
 BINARY_DARWIN=$(TARGET)/$(BINARY_NAME)_darwin
 BINARY_WINDOWS=$(TARGET)/$(BINARY_NAME)_windows.EXE
 
-all: build test
+all: deps build test
 build: 
 	$(GOBUILD) -o $(BINARY_NAME) -v
 test: 
