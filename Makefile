@@ -4,6 +4,7 @@ GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
+DOCKER=docker
 BINARY_NAME=adapter
 TARGET=target
 BINARY_LINUX=$(TARGET)/$(BINARY_NAME)_linux
@@ -25,6 +26,9 @@ run:
 deps:
 	$(GOGET) github.com/wavefrontHQ/prometheus-storage-adapter    
 build-all: deps build-linux build-darwin build-windows
+build-docker: build-linux
+	$(DOCKER) build .
+release: build-all build-docker
 
 # Cross compilation
 build-linux:

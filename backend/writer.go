@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"bufio"
 	"bytes"
 	"strconv"
 	"strings"
@@ -39,23 +40,24 @@ func (w *MetricWriter) Write(rq prompb.WriteRequest) error {
 	if err != nil {
 		return err
 	}
+	fail := false
+	bw := bufio.NewWriter(out)
+	defer func() {
+		bw.Flush()
+		if !fail {
+			w.pool.Return(out)
+		}
+	}()
 	for _, ts := range rq.Timeseries {
-		for _, metricPoint := range w.buildMetrics(ts) {
-			metricLine := w.formatMetricPoint(metricPoint)
-			_, err := out.Write([]byte(metricLine))
-			if err != nil {
-				// Writing to a pipe shouldn't give us an error, so we panic if we get one!
-				panic(err)
-			}
+		if err := w.writeMetrics(bw, ts); err != nil {
+			fail = true
+			return err
 		}
 	}
-	w.pool.Return(out)
 	return nil
 }
 
-func (w *MetricWriter) buildMetrics(ts *prompb.TimeSeries) []*metricPoint {
-	ret := []*metricPoint{}
-
+func (w *MetricWriter) writeMetrics(wrt *bufio.Writer, ts *prompb.TimeSeries) error {
 	tags := make(map[string]string, len(ts.Labels))
 	for _, l := range ts.Labels {
 		tags[l.Name] = l.Value
@@ -78,9 +80,9 @@ func (w *MetricWriter) buildMetrics(ts *prompb.TimeSeries) []*metricPoint {
 		metric.Source = source
 		metric.Tags = tags
 
-		ret = append(ret, metric)
+		w.writeMetricPoint(wrt, metric)
 	}
-	return ret
+	return nil
 }
 
 func (w *MetricWriter) buildTags(mTags map[string]string) (string, map[string]string) {
@@ -101,7 +103,7 @@ func (w *MetricWriter) buildTags(mTags map[string]string) (string, map[string]st
 	return tagValueReplacer.Replace(source), mTags
 }
 
-func (w *MetricWriter) formatMetricPoint(metricPoint *metricPoint) string {
+func (w *MetricWriter) writeMetricPoint(wrt *bufio.Writer, metricPoint *metricPoint) error {
 	buffer := bytes.NewBufferString("")
 	buffer.WriteString(metricPoint.Metric)
 	buffer.WriteString(" ")
@@ -119,11 +121,11 @@ func (w *MetricWriter) formatMetricPoint(metricPoint *metricPoint) string {
 		buffer.WriteString(tagValueReplacer.Replace(v))
 		buffer.WriteString("\"")
 	}
+	log.Debugf(buffer.String())
 
 	buffer.WriteString("\n")
-
-	log.Debugf(buffer.String())
-	return buffer.String()
+	_, err := wrt.WriteString(buffer.String())
+	return err
 }
 
 func sanitizeName(name string) string {

@@ -1,12 +1,14 @@
 package backend
 
 import (
+	"bufio"
+	"bytes"
 	"testing"
 )
 
 func TestWrite(t *testing.T) {
 	m := metricPoint{
-		Metric: "decontribulator_temperature",
+		Metric: "decontribulator.temperature",
 		Source: "main decontribulator",
 		Value:  42,
 		Tags:   map[string]string{"carbendingulator": "S-1103347P1"},
@@ -14,8 +16,14 @@ func TestWrite(t *testing.T) {
 	w := MetricWriter{
 		prefix: "xyz",
 	}
-	if s := w.formatMetricPoint(&m); s != "decontribulator_temperature 42.000000 0 source=\"main decontribulator\" carbendingulator=\"S-1103347P1\"\n" {
-		t.Errorf("Resulting string was: %s", s)
+	var buf bytes.Buffer
+	bw := bufio.NewWriter(&buf)
+	if err := w.writeMetricPoint(bw, &m); err != nil {
+		t.Errorf("Error while writing metrics: %s", err)
+	}
+	bw.Flush()
+	if buf.String() != "decontribulator.temperature 42.000000 0 source=\"main decontribulator\" carbendingulator=\"S-1103347P1\"\n" {
+		t.Errorf("Resulting string was: %s", buf.String())
 	}
 }
 

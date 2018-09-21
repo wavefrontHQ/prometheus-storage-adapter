@@ -26,22 +26,30 @@ You can run the adapter directly from the command line, but in production you wo
 
 The adapter takes the following parameters:
 ```
- -debug
-    	Print detailed debug messages.
-  -listen string
-    	Port/address to listen to on the format '[address:]port'. If no address is specified, the adapter listens to all interfaces.
-  -prefix string
-    	Prefix for metric names. If omitted, no prefix is added.
-  -proxy string
-    	Host address to wavefront proxy.
-  -proxy-port int
-    	Proxy port. (default 2878)
+-debug
+    Print detailed debug messages.
+-listen string
+    Port/address to listen to on the format '[address:]port'. If no address is specified, the adapter listens to all interfaces.
+-prefix string
+    Prefix for metric names. If omitted, no prefix is added.
+-proxy string
+    Host address to wavefront proxy.
+-proxy-port int
+    Proxy port. (default 2878)
+-tags string
+    A comma separated list of tags to be added to each point on the form "tag1=value1,tag2=value2..."
 ```
 
 ### Example
 To run the adapter listening to port 1234 and sending results to localhost:2878, we can use the following command. This command also adds a prefix ("prom") to all metrics coming from the adapter.
 ```
 ./adapter -proxy localhost -proxy-port 2878 -listen 1234 -prefix prom
+```
+
+## Running the adapter in a Docker container
+The adapter is available as a Docker image. To run it, simply type ```docker run <TODO: Name of repo>``` with the parameters discussed above, for example:
+```
+docker run <TODO: Name of repo> -proxy localhost -proxy-port 2878 -listen 1234 -prefix prom
 ```
 
 ## Integrating with Prometheus
