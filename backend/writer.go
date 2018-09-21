@@ -13,6 +13,7 @@ type MetricWriter struct {
 	prefix         string
 	sourceOverride []string
 	pool           *Pool
+	tags           map[string]string
 }
 
 var tagValueReplacer = strings.NewReplacer("\"", "\\\"", "*", "-")
@@ -25,10 +26,11 @@ type metricPoint struct {
 	Tags      map[string]string
 }
 
-func NewMetricWriter(host, prefix string) *MetricWriter {
+func NewMetricWriter(host, prefix string, tags map[string]string) *MetricWriter {
 	return &MetricWriter{
 		pool:   NewPool(host),
 		prefix: prefix,
+		tags:   tags,
 	}
 }
 
@@ -90,6 +92,11 @@ func (w *MetricWriter) buildTags(mTags map[string]string) (string, map[string]st
 	}
 	source := mTags["instance"]
 	delete(mTags, "instance")
+
+	// Add optional tags
+	for k, v := range w.tags {
+		mTags[k] = v
+	}
 
 	return tagValueReplacer.Replace(source), mTags
 }

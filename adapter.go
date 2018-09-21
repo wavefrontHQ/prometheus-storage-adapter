@@ -16,14 +16,32 @@ import (
 	"github.com/prometheus/prometheus/prompb"
 )
 
+func parseTags(s string) map[string]string {
+	tags := make(map[string]string)
+	if s == "" {
+		return tags
+	}
+	for _, tag := range strings.Split(s, ",") {
+		l := strings.Split(tag, "=")
+		if len(l) != 2 {
+			fmt.Fprintln(os.Stderr, "Tags must be formatted as \"tag=value,tag2=value...\"")
+			os.Exit(1)
+		}
+		tags[strings.TrimSpace(l[0])] = strings.TrimSpace(l[1])
+	}
+	return tags
+}
+
 func main() {
 	var prefix string
 	var host string
 	var listen string
+	var tags string
 	flag.StringVar(&prefix, "prefix", "", "Prefix for metric names. If omitted, no prefix is added.")
 	flag.StringVar(&host, "proxy", "", "Host address to wavefront proxy.")
 	port := flag.Int("proxy-port", 2878, "Proxy port.")
 	flag.StringVar(&listen, "listen", "", "Port/address to listen to on the format '[address:]port'. If no address is specified, the adapter listens to all interfaces.")
+	flag.StringVar(&tags, "tags", "", "A comma separated list of tags to be added to each point on the form \"tag1=value1,tag2=value2...\"")
 	debug := flag.Bool("debug", false, "Print detailed debug messages.")
 	flag.Parse()
 
@@ -44,7 +62,7 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 	host = fmt.Sprintf("%s:%d", host, *port)
-	mw := backend.NewMetricWriter(host, prefix)
+	mw := backend.NewMetricWriter(host, prefix, parseTags(tags))
 	http.HandleFunc("/receive", func(w http.ResponseWriter, r *http.Request) {
 		compressed, err := ioutil.ReadAll(r.Body)
 		if err != nil {
