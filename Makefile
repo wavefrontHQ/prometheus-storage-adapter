@@ -11,6 +11,10 @@ BINARY_LINUX=$(TARGET)/$(BINARY_NAME)_linux
 BINARY_DARWIN=$(TARGET)/$(BINARY_NAME)_darwin
 BINARY_WINDOWS=$(TARGET)/$(BINARY_NAME)_windows.EXE
 
+DOCKER_REPO=wavefronthq
+DOCKER_IMAGE=prometheus-storage-adapter
+VERSION=0.9.0
+
 all: deps build test
 build: 
 	$(GOBUILD) -o $(BINARY_NAME) -v
@@ -27,7 +31,8 @@ deps:
 	$(GOGET) github.com/wavefronthq/prometheus-storage-adapter    
 build-all: deps build-linux build-darwin build-windows
 build-docker: build-linux
-	$(DOCKER) build .
+	$(DOCKER) build -t $(DOCKER_REPO)/$(DOCKER_IMAGE):$(VERSION) .
+	$(DOCKER) tag $(DOCKER_REPO)/$(DOCKER_IMAGE):$(VERSION) $(DOCKER_REPO)/$(DOCKER_IMAGE):latest
 release: build-all build-docker
 
 # Cross compilation
