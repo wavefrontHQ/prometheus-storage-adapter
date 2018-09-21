@@ -24,7 +24,7 @@ run:
 	$(GOBUILD) -o $(BINARY_NAME) -v ./...
 	./$(BINARY_NAME)
 deps:
-	$(GOGET) github.com/wavefrontHQ/prometheus-storage-adapter    
+	$(GOGET) github.com/wavefronthq/prometheus-storage-adapter    
 build-all: deps build-linux build-darwin build-windows
 build-docker: build-linux
 	$(DOCKER) build .

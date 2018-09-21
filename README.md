@@ -13,11 +13,11 @@ Building from source is easy. Simply grab the code with go get and build it with
 
 1. Download the source
 ```
-go get github.com/wavefrontHQ/prometheus-storage-adapter
+go get github.com/wavefronthq/prometheus-storage-adapter
 ```
 2. Build it
 ```
-cd $(GOPATH)/src/github.com/wavefrontHQ/prometheus-storage-adapter
+cd $(GOPATH)/src/github.com/wavefronthq/prometheus-storage-adapter
 make deps build
 ```
 
