@@ -22,7 +22,7 @@ func main() {
 	var listen string
 	flag.StringVar(&prefix, "prefix", "", "Prefix for metric names. If omitted, no prefix is added.")
 	flag.StringVar(&host, "proxy", "", "Host address to wavefront proxy.")
-	port := flag.Int("proxy-port", 2878, "Proxy port. Defaults to 2878")
+	port := flag.Int("proxy-port", 2878, "Proxy port.")
 	flag.StringVar(&listen, "listen", "", "Port/address to listen to on the format '[address:]port'. If no address is specified, the adapter listens to all interfaces.")
 	debug := flag.Bool("debug", false, "Print detailed debug messages.")
 	flag.Parse()
