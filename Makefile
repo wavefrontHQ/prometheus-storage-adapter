@@ -11,7 +11,7 @@ BINARY_LINUX=$(TARGET)/$(BINARY_NAME)_linux
 BINARY_DARWIN=$(TARGET)/$(BINARY_NAME)_darwin
 BINARY_WINDOWS=$(TARGET)/$(BINARY_NAME)_windows.EXE
 
-all: test build
+all: build test
 build: 
 	$(GOBUILD) -o $(BINARY_NAME) -v
 test: 
@@ -19,7 +19,7 @@ test:
 clean: 
 	$(GOCLEAN)
 	rm -f $(BINARY_NAME)
-	rm -f $(BINARY_UNIX)
+	rm -rf $(TARGET)
 run:
 	$(GOBUILD) -o $(BINARY_NAME) -v ./...
 	./$(BINARY_NAME)
