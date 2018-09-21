@@ -23,6 +23,13 @@ func NewPool(host string) *Pool {
 	}
 }
 
+func prepareConnection(conn net.Conn) (net.Conn, error) {
+	if err := conn.SetWriteDeadline(time.Now().Add(60 * time.Second)); err != nil {
+		return nil, err
+	}
+	return conn, nil
+}
+
 // Based on an algorithm by Dustin Sallins:
 // http://dustin.sallings.org/2014/04/25/chan-pool.html
 func (cp *Pool) Get() (net.Conn, error) {
@@ -30,14 +37,14 @@ func (cp *Pool) Get() (net.Conn, error) {
 	// Try to grab an available connection within 1ms
 	select {
 	case conn := <-cp.connections:
-		return conn, nil
+		return prepareConnection(conn)
 	case <-time.After(time.Millisecond):
 		// No connection came around in time, let's see
 		// whether we can get one or build a new one first.
 		log.Debugf("No connection in pool")
 		select {
 		case conn := <-cp.connections:
-			return conn, nil
+			return prepareConnection(conn)
 		case cp.createsem <- true:
 			// Room to make a connection
 			log.Debugf("About to connect")
@@ -45,8 +52,9 @@ func (cp *Pool) Get() (net.Conn, error) {
 			if err != nil {
 				// On error, release our create hold
 				<-cp.createsem
+				return nil, err
 			}
-			return conn, err
+			return prepareConnection(conn)
 		}
 	}
 }

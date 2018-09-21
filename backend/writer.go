@@ -2,14 +2,8 @@ package backend
 
 import (
 	"bytes"
-	"fmt"
-	"io"
-	"io/ioutil"
-	"net"
-	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/prometheus/prometheus/prompb"
@@ -18,8 +12,7 @@ import (
 type MetricWriter struct {
 	prefix         string
 	sourceOverride []string
-	client         *http.Client
-	url            string
+	pool           *Pool
 }
 
 var tagValueReplacer = strings.NewReplacer("\"", "\\\"", "*", "-")
@@ -33,52 +26,29 @@ type metricPoint struct {
 }
 
 func NewMetricWriter(host, prefix string) *MetricWriter {
-	var netTransport = &http.Transport{
-		Dial: (&net.Dialer{
-			Timeout: 5 * time.Second,
-		}).Dial,
-		TLSHandshakeTimeout: 5 * time.Second,
-	}
-	var client = &http.Client{
-		Timeout:   time.Second * 10,
-		Transport: netTransport,
-	}
-
 	return &MetricWriter{
-		client: client,
+		pool:   NewPool(host),
 		prefix: prefix,
-		url:    "http://" + host + "/",
 	}
 }
 
 func (w *MetricWriter) Write(rq prompb.WriteRequest) error {
-
-	// Send Data to Wavefront proxy Server
-	rdr, wrt := io.Pipe()
-
-	// The Post will block looking for data on the Reader, so this has to run
-	// concurrently or we will deadlock.
-	go func() {
-		for _, ts := range rq.Timeseries {
-			for _, metricPoint := range w.buildMetrics(ts) {
-				metricLine := w.formatMetricPoint(metricPoint)
-				_, err := wrt.Write([]byte(metricLine))
-				if err != nil {
-					// Writing to a pipe shouldn't give us an error, so we panic if we get one!
-					panic(err)
-				}
+	out, err := w.pool.Get()
+	if err != nil {
+		return err
+	}
+	for _, ts := range rq.Timeseries {
+		for _, metricPoint := range w.buildMetrics(ts) {
+			metricLine := w.formatMetricPoint(metricPoint)
+			_, err := out.Write([]byte(metricLine))
+			if err != nil {
+				// Writing to a pipe shouldn't give us an error, so we panic if we get one!
+				panic(err)
 			}
 		}
-	}()
-	resp, err := w.client.Post(w.url, "application/text", rdr)
-	if err != nil {
-		return fmt.Errorf("Wavefront: TCP connect fail %s", err.Error())
 	}
-	log.Debugf("Proxy returned status code: %d", resp.StatusCode)
-	// Read response until end before closing. Failure to do this will cause connection leaks.
-	defer resp.Body.Close()
-	_, err = io.Copy(ioutil.Discard, resp.Body)
-	return err
+	w.pool.Return(out)
+	return nil
 }
 
 func (w *MetricWriter) buildMetrics(ts *prompb.TimeSeries) []*metricPoint {
@@ -165,7 +135,6 @@ func sanitizeName(name string) string {
 	}
 	if sb == nil {
 		return name
-	} else {
-		return sb.String()
 	}
+	return sb.String()
 }

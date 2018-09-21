@@ -4,6 +4,21 @@ import (
 	"testing"
 )
 
+func TestWrite(t *testing.T) {
+	m := metricPoint{
+		Metric: "decontribulator_temperature",
+		Source: "main decontribulator",
+		Value:  42,
+		Tags:   map[string]string{"carbendingulator": "S-1103347P1"},
+	}
+	w := MetricWriter{
+		prefix: "xyz",
+	}
+	if s := w.formatMetricPoint(&m); s != "decontribulator_temperature 42.000000 0 source=\"main decontribulator\" carbendingulator=\"S-1103347P1\"\n" {
+		t.Errorf("Resulting string was: %s", s)
+	}
+}
+
 func TestSanitizeName(t *testing.T) {
 	s := "ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvxyz-"
 	if ss := sanitizeName(s); ss != s {

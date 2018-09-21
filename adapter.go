@@ -21,10 +21,10 @@ func main() {
 	var host string
 	var listen string
 	flag.StringVar(&prefix, "prefix", "", "Prefix for metric names. If omitted, no prefix is added.")
-	flag.StringVar(&host, "proxy", "", "Address to wavefront proxy on the form 'hostname:port'.")
+	flag.StringVar(&host, "proxy", "", "Host address to wavefront proxy.")
+	port := flag.Int("proxy-port", 2878, "Proxy port. Defaults to 2878")
 	flag.StringVar(&listen, "listen", "", "Port/address to listen to on the format '[address:]port'. If no address is specified, the adapter listens to all interfaces.")
 	debug := flag.Bool("debug", false, "Print detailed debug messages.")
-	//help := flag.Bool("help", false, "Print helpful information and exit.")
 	flag.Parse()
 
 	if host == "" {
@@ -43,6 +43,7 @@ func main() {
 	if *debug {
 		log.SetLevel(log.DebugLevel)
 	}
+	host = fmt.Sprintf("%s:%d", host, *port)
 	mw := backend.NewMetricWriter(host, prefix)
 	http.HandleFunc("/receive", func(w http.ResponseWriter, r *http.Request) {
 		compressed, err := ioutil.ReadAll(r.Body)
