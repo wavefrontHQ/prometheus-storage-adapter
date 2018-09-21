@@ -62,7 +62,7 @@ func (w *MetricWriter) writeMetrics(wrt *bufio.Writer, ts *prompb.TimeSeries) er
 	for _, l := range ts.Labels {
 		tags[l.Name] = l.Value
 	}
-	fieldName := strings.Replace(tags["__name__"], "_", ".", -1)
+	fieldName := sanitizeName(tags["__name__"])
 	delete(tags, "__name__")
 	if w.prefix != "" {
 		fieldName = w.prefix + "." + fieldName
@@ -140,7 +140,11 @@ func sanitizeName(name string) string {
 		if sb == nil {
 			sb = bytes.NewBufferString(name[:i])
 		}
-		sb.WriteRune('-')
+		if ch == '_' {
+			sb.WriteRune('.')
+		} else {
+			sb.WriteRune('-')
+		}
 	}
 	if sb == nil {
 		return name

@@ -43,12 +43,17 @@ func TestSanitizeName(t *testing.T) {
 	}
 
 	s = sanitizeName(" this has a_leading*illegal(char")
-	if "-this-has-a-leading-illegal-char" != s {
+	if "-this-has-a.leading-illegal-char" != s {
 		t.Errorf("Resulting string was: %s", s)
 	}
 
 	s = sanitizeName("this has a_trailing*illegal(char=")
-	if "this-has-a-trailing-illegal-char-" != s {
+	if "this-has-a.trailing-illegal-char-" != s {
+		t.Errorf("Resulting string was: %s", s)
+	}
+
+	s = sanitizeName("underscores_should_be_turned_into_periods")
+	if "underscores.should.be.turned.into.periods" != s {
 		t.Errorf("Resulting string was: %s", s)
 	}
 
