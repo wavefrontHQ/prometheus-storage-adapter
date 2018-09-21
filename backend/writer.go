@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -121,7 +122,19 @@ func (w *MetricWriter) writeMetricPoint(wrt *bufio.Writer, metricPoint *metricPo
 	buffer.WriteString(metricPoint.Source)
 	buffer.WriteString("\"")
 
-	for k, v := range metricPoint.Tags {
+	// Sort keys so we have a predictable order. In future versions we probably
+	// shouldn't use a map at all, but a key-value list that preserves insertion
+	// order.
+	keys := make([]string, len(metricPoint.Tags))
+	i := 0
+	for k := range metricPoint.Tags {
+		keys[i] = k
+		i++
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		v := metricPoint.Tags[k]
 		buffer.WriteString(" ")
 		buffer.WriteString(sanitizeName(k))
 		buffer.WriteString("=\"")

@@ -120,7 +120,7 @@ func TestFull(t *testing.T) {
 	case <-time.After(10 * time.Second):
 		t.Error("Times out waiting for metrics")
 	case s := <-response:
-		if s != "prom.cpu.utilization.percent 50.000000 1086062400 source=\"localhost\" foo=\"bar\" bar=\"foo\" cpu=\"1\"\n" {
+		if s != "prom.cpu.utilization.percent 50.000000 1086062400 source=\"localhost\" bar=\"foo\" cpu=\"1\" foo=\"bar\"\n" {
 			t.Errorf("Received from sender: %s", s)
 		}
 	}
