@@ -6,7 +6,7 @@ Prometheus storage adapters can act as a "fork" and send data to a secondary loc
 ## Installation
 
 ### Download binaries
-Prebuilt binaries for Linux, MacOSX and Windows are available here TODO: Link to releases
+Prebuilt binaries for Linux, MacOSX and Windows are available here https://github.com/wavefrontHQ/prometheus-storage-adapter/releases
 
 ### Building from source
 Building from source is easy. Simply grab the code with go get and build it with make.
@@ -22,7 +22,7 @@ make deps build
 ```
 
 ## Running the adapter
-You can run the adapter directly from the command line, but in production you would probably make it a service that starts at system boot time. TODO: Publish start files.
+You can run the adapter directly from the command line, but in production you would probably make it a service that starts at system boot time. 
 
 The adapter takes the following parameters:
 ```
