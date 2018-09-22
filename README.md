@@ -1,4 +1,4 @@
-# Prometheus Storage Adapter for Wavefront
+# Prometheus Storage Adapter for Wavefront [![Build Status](https://travis-ci.com/wavefrontHQ/prometheus-storage-adapter.svg?branch=master)](https://travis-ci.com/wavefrontHQ/prometheus-storage-adapter)
 
 ## Introduction
 Prometheus storage adapters can act as a "fork" and send data to a secondary location. This adapter simply takes the data being sent to it and forwards it to a Wavefront proxy. It is useful when you want data collected by Prometheus to be available in Wavefront.
