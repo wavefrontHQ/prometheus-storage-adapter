@@ -16,18 +16,26 @@ DOCKER_IMAGE=prometheus-storage-adapter
 VERSION=0.9.0
 
 all: deps build test
+
+.PHONY build:
 build: 
 	$(GOBUILD) -o $(BINARY_NAME) -v
+
+.PHONY test:
 test: 
 	$(GOTEST) -v ./...
+
+.PHONY clean:
 clean: 
 	$(GOCLEAN)
 	rm -f $(BINARY_NAME)
 	rm -rf $(TARGET)
+
 run:
 	$(GOBUILD) -o $(BINARY_NAME) -v ./...
 	./$(BINARY_NAME)
 
+.PHONY dep:
 dep:
 ifeq ($(shell command -v dep 2> /dev/null),)
 	go get -u -v github.com/golang/dep/cmd/dep
@@ -43,9 +51,14 @@ build-docker: build-linux
 release: build-all build-docker
 
 # Cross compilation
+.PHONY build-linux:
 build-linux:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINARY_LINUX) -v
+
+.PHONY build-darwin:
 build-darwin:
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GOBUILD) -o $(BINARY_DARWIN) -v
+
+.PHONY build-windows:
 build-windows:
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GOBUILD) -o $(BINARY_WINDOWS) -v
