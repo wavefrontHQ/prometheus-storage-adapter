@@ -51,7 +51,7 @@ func (w *MetricWriter) Write(rq prompb.WriteRequest) error {
 		}
 	}()
 	for _, ts := range rq.Timeseries {
-		if err := w.writeMetrics(bw, ts); err != nil {
+		if err := w.writeMetrics(bw, &ts); err != nil {
 			fail = true
 			return err
 		}

@@ -27,8 +27,15 @@ clean:
 run:
 	$(GOBUILD) -o $(BINARY_NAME) -v ./...
 	./$(BINARY_NAME)
-deps:
-	$(GOGET) github.com/wavefronthq/prometheus-storage-adapter    
+
+dep:
+ifeq ($(shell command -v dep 2> /dev/null),)
+	go get -u -v github.com/golang/dep/cmd/dep
+endif
+
+deps: dep
+	dep ensure -v
+
 build-all: deps build-linux build-darwin build-windows
 build-docker: build-linux
 	$(DOCKER) build -t $(DOCKER_REPO)/$(DOCKER_IMAGE):$(VERSION) .
