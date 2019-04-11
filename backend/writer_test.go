@@ -89,29 +89,29 @@ func TestFull(t *testing.T) {
 	// Create a client and send a single metric through
 	w := NewMetricWriter("localhost:4711", "prom", map[string]string{"foo": "bar", "bar": "foo"})
 	ts := prompb.TimeSeries{
-		Labels: []*prompb.Label{
-			&prompb.Label{
+		Labels: []prompb.Label{
+			prompb.Label{
 				Name:  "__name__",
 				Value: "cpu_utilization_percent",
 			},
-			&prompb.Label{
+			prompb.Label{
 				Name:  "instance",
 				Value: "localhost",
 			},
-			&prompb.Label{
+			prompb.Label{
 				Name:  "cpu",
 				Value: "1",
 			},
 		},
-		Samples: []*prompb.Sample{
-			&prompb.Sample{
+		Samples: []prompb.Sample{
+			prompb.Sample{
 				Value:     50,
 				Timestamp: 1086062400,
 			},
 		},
 	}
 	req := prompb.WriteRequest{
-		Timeseries: []*prompb.TimeSeries{&ts},
+		Timeseries: []prompb.TimeSeries{ts},
 	}
 	w.Write(req)
 
