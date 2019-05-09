@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"errors"
 	"net"
 	"time"
 
@@ -8,19 +9,30 @@ import (
 )
 
 const maxConn int = 10
+const maxOverflow int = 10
+const maxConnWait time.Duration = 10 * time.Millisecond
+
+// Errors
+var ErrTimeout = errors.New("timeout waiting to build connection")
 
 type Pool struct {
 	host        string
 	connections chan (net.Conn)
 	createsem   chan (bool)
+	mkConn      func(host string) (net.Conn, error)
 }
 
 func NewPool(host string) *Pool {
 	return &Pool{
 		host:        host,
 		connections: make(chan (net.Conn), maxConn),
-		createsem:   make(chan (bool), 1),
+		createsem:   make(chan (bool), maxConn+maxOverflow),
+		mkConn:      defaultMkConn,
 	}
+}
+
+func defaultMkConn(host string) (net.Conn, error) {
+	return net.Dial("tcp", host)
 }
 
 func prepareConnection(conn net.Conn) (net.Conn, error) {
@@ -48,28 +60,42 @@ func (cp *Pool) Get() (net.Conn, error) {
 		case cp.createsem <- true:
 			// Room to make a connection
 			log.Debugf("About to connect")
-			conn, err := net.Dial("tcp", cp.host)
+			conn, err := cp.mkConn(cp.host)
 			if err != nil {
 				// On error, release our create hold
-				<-cp.createsem
+				cp.release(conn)
 				return nil, err
 			}
-			return prepareConnection(conn)
+			conn, err = prepareConnection(conn)
+			if err != nil {
+				// On error, release our create hold
+				cp.release(conn)
+				return nil, err
+			}
+			return conn, err
+		case <-time.After(maxConnWait):
+			log.Debugf("Max connection exceeded")
+			return nil, ErrTimeout
 		}
 	}
 }
 
-func (cp *Pool) Return(c net.Conn, failed bool) {
+func (cp *Pool) release(conn net.Conn) {
+	<-cp.createsem
+	if conn != nil {
+		conn.Close()
+	}
+}
 
+func (cp *Pool) Return(conn net.Conn, failed bool) {
 	if failed {
-		<-cp.createsem
+		cp.release(conn)
 		return
 	}
 	select {
-	case cp.connections <- c:
+	case cp.connections <- conn:
 	default:
 		// Overflow connection.
-		<-cp.createsem
-		c.Close()
+		cp.release(conn)
 	}
 }
