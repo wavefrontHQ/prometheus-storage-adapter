@@ -46,9 +46,7 @@ func (w *MetricWriter) Write(rq prompb.WriteRequest) error {
 	bw := bufio.NewWriter(out)
 	defer func() {
 		bw.Flush()
-		if !fail {
-			w.pool.Return(out)
-		}
+		w.pool.Return(out, fail)
 	}()
 	for _, ts := range rq.Timeseries {
 		if err := w.writeMetrics(bw, &ts); err != nil {

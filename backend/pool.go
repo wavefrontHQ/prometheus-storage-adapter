@@ -59,7 +59,12 @@ func (cp *Pool) Get() (net.Conn, error) {
 	}
 }
 
-func (cp *Pool) Return(c net.Conn) {
+func (cp *Pool) Return(c net.Conn, failed bool) {
+
+	if failed {
+		<-cp.createsem
+		return
+	}
 	select {
 	case cp.connections <- c:
 	default:
