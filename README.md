@@ -1,4 +1,4 @@
-# Prometheus Storage Adapter for Wavefront [![Build Status](https://travis-ci.com/wavefrontHQ/prometheus-storage-adapter.svg?branch=master)](https://travis-ci.com/wavefrontHQ/prometheus-storage-adapter)
+# Prometheus Storage Adapter for Wavefront [![build status][ci-img]][ci] [![Go Report Card][go-report-img]][go-report] [![Docker Pulls][docker-pull-img]][docker-img]
 
 ## Introduction
 Prometheus storage adapters can act as a "fork" and send data to a secondary location. This adapter simply takes the data being sent to it and forwards it to a Wavefront proxy. It is useful when you want data collected by Prometheus to be available in Wavefront.
@@ -22,7 +22,7 @@ make deps build
 ```
 
 ## Running the adapter
-You can run the adapter directly from the command line, but in production you would probably make it a service that starts at system boot time. 
+You can run the adapter directly from the command line, but in production you would probably make it a service that starts at system boot time.
 
 The adapter takes the following parameters:
 ```
@@ -61,3 +61,10 @@ remote_write:
 ```
 
 Once you have saved the config file, you need to restart Prometheus.
+
+[ci-img]: https://travis-ci.com/wavefrontHQ/prometheus-storage-adapter.svg?branch=master
+[ci]: https://travis-ci.com/wavefrontHQ/prometheus-storage-adapter
+[go-report-img]: https://goreportcard.com/badge/github.com/wavefronthq/prometheus-storage-adapter
+[go-report]: https://goreportcard.com/report/github.com/wavefronthq/prometheus-storage-adapter
+[docker-pull-img]: https://img.shields.io/docker/pulls/wavefronthq/prometheus-storage-adapter.svg?logo=docker
+[docker-img]: https://hub.docker.com/r/wavefronthq/prometheus-storage-adapter/
