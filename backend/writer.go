@@ -45,7 +45,11 @@ func (w *MetricWriter) Write(rq prompb.WriteRequest) error {
 	fail := false
 	bw := bufio.NewWriter(out)
 	defer func() {
-		bw.Flush()
+		err := bw.Flush()
+		if err != nil {
+			log.Infof("failed to write to socket due to %v", err)
+			fail = true
+		}
 		w.pool.Return(out, fail)
 	}()
 	for _, ts := range rq.Timeseries {
