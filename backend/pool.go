@@ -2,6 +2,7 @@ package backend
 
 import (
 	"errors"
+	"io"
 	"net"
 	"time"
 
@@ -87,8 +88,25 @@ func (cp *Pool) release(conn net.Conn) {
 	}
 }
 
+func (cp *Pool) connOk(conn net.Conn) bool {
+	if conn == nil {
+		return false
+	}
+	if err := conn.SetReadDeadline(time.Now().Add(2 * time.Millisecond)); err != nil {
+		return false
+	}
+	// you have to try reading atleast 1 byte to detect closed connection
+	b1 := make([]byte, 1)
+	_, err := conn.Read(b1)
+	if err != nil && err == io.EOF {
+		log.Info("Connection is closed")
+		return false
+	}
+	return true
+}
+
 func (cp *Pool) Return(conn net.Conn, failed bool) {
-	if failed {
+	if failed || !cp.connOk(conn) {
 		cp.release(conn)
 		return
 	}
