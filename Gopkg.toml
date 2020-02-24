@@ -41,6 +41,10 @@
   name = "github.com/sirupsen/logrus"
   version = "1.4.1"
 
+[[constraint]]
+  name = "github.com/wavefrontHQ/wavefront-sdk-go"
+  version = "0.9.5"
+
 [prune]
   go-tests = true
   unused-packages = true

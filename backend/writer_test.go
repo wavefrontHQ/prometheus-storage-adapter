@@ -2,65 +2,25 @@ package backend
 
 import (
 	"bufio"
-	"bytes"
+	"github.com/stretchr/testify/require"
 	"net"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/prometheus/prometheus/prompb"
 )
 
-func TestWrite(t *testing.T) {
-	m := metricPoint{
-		Metric: "decontribulator.temperature",
-		Source: "main decontribulator",
-		Value:  42,
-		Tags:   map[string]string{"carbendingulator": "S-1103347P1"},
-	}
-	w := MetricWriter{
-		prefix: "xyz",
-	}
-	var buf bytes.Buffer
-	bw := bufio.NewWriter(&buf)
-	if err := w.writeMetricPoint(bw, &m); err != nil {
-		t.Errorf("Error while writing metrics: %s", err)
-	}
-	bw.Flush()
-	if buf.String() != "decontribulator.temperature 42.000000 0 source=\"main decontribulator\" carbendingulator=\"S-1103347P1\"\n" {
-		t.Errorf("Resulting string was: %s", buf.String())
-	}
-}
+var linePrefix = "\"prom_cpu_utilization_percent\" 50 1086062400 source=\"localhost\""
 
-func TestSanitizeName(t *testing.T) {
-	s := "ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvxyz-"
-	if ss := sanitizeName(s); ss != s {
-		t.Errorf("Resulting string was: %s", s)
-	}
-
-	s = "this-IS-a-ReAlLy-COMPLEX-name-that-SHOULD-be-LEFT-unTOUCHED"
-	if ss := sanitizeName(s); ss != s {
-		t.Errorf("Resulting string was: %s", s)
-	}
-
-	s = sanitizeName(" this has a_leading*illegal(char")
-	if "-this-has-a.leading-illegal-char" != s {
-		t.Errorf("Resulting string was: %s", s)
-	}
-
-	s = sanitizeName("this has a_trailing*illegal(char=")
-	if "this-has-a.trailing-illegal-char-" != s {
-		t.Errorf("Resulting string was: %s", s)
-	}
-
-	s = sanitizeName("underscores_should_be_turned_into_periods")
-	if "underscores.should.be.turned.into.periods" != s {
-		t.Errorf("Resulting string was: %s", s)
-	}
-
-	s = sanitizeName("Some Chinese: 波前的岩石")
-	if "Some-Chinese-------" != s {
-		t.Errorf("Resulting string was: %s", s)
-	}
+var parts = []string {
+	"\"prom_cpu_utilization_percent\"",
+	"50",
+	"1086062400",
+	"source=\"localhost\"",
+	"\"bar\"=\"foo\"",
+	"\"foo\"=\"bar\"",
+	"\"cpu\"=\"1\"",
 }
 
 func TestFull(t *testing.T) {
@@ -87,7 +47,8 @@ func TestFull(t *testing.T) {
 	}()
 
 	// Create a client and send a single metric through
-	w := NewMetricWriter("localhost:4711", "prom", map[string]string{"foo": "bar", "bar": "foo"})
+	w, err := NewMetricWriter("localhost", 4711, "prom", map[string]string{"foo": "bar", "bar": "foo"})
+	require.NoError(t, err)
 	ts := prompb.TimeSeries{
 		Labels: []prompb.Label{
 			prompb.Label{
@@ -120,8 +81,9 @@ func TestFull(t *testing.T) {
 	case <-time.After(10 * time.Second):
 		t.Error("Times out waiting for metrics")
 	case s := <-response:
-		if s != "prom.cpu.utilization.percent 50.000000 1086062400 source=\"localhost\" bar=\"foo\" cpu=\"1\" foo=\"bar\"\n" {
-			t.Errorf("Received from sender: %s", s)
-		}
+		require.Equal(t, linePrefix, s[0:len(linePrefix)])
+		r := []rune(s)
+		require.Equal(t, '\n', r[len(r)-1])
+		require.ElementsMatch(t, parts, strings.Split(strings.Trim(s, "\n"), " "))
 	}
 }

@@ -37,9 +37,10 @@ func main() {
 	var host string
 	var listen string
 	var tags string
+	var port int
 	flag.StringVar(&prefix, "prefix", "", "Prefix for metric names. If omitted, no prefix is added.")
 	flag.StringVar(&host, "proxy", "", "Host address to wavefront proxy.")
-	port := flag.Int("proxy-port", 2878, "Proxy port.")
+	flag.IntVar(&port,"proxy-port", 2878, "Proxy port.")
 	flag.StringVar(&listen, "listen", "", "Port/address to listen to on the format '[address:]port'. If no address is specified, the adapter listens to all interfaces.")
 	flag.StringVar(&tags, "tags", "", "A comma separated list of tags to be added to each point on the form \"tag1=value1,tag2=value2...\"")
 	debug := flag.Bool("debug", false, "Print detailed debug messages.")
@@ -61,8 +62,11 @@ func main() {
 	if *debug {
 		log.SetLevel(log.DebugLevel)
 	}
-	host = fmt.Sprintf("%s:%d", host, *port)
-	mw := backend.NewMetricWriter(host, prefix, parseTags(tags))
+	mw, err := backend.NewMetricWriter(host, port, prefix, parseTags(tags))
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 	http.HandleFunc("/receive", func(w http.ResponseWriter, r *http.Request) {
 		compressed, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -84,9 +88,7 @@ func main() {
 			return
 		}
 
-		if err := mw.Write(req); err != nil {
-			log.Errorf("Error during write to Wavefront:, %s", err)
-		}
+		mw.Write(req)
 	})
 
 	log.Fatal(http.ListenAndServe(listen, nil))
