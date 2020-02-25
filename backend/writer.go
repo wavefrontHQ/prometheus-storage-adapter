@@ -10,9 +10,12 @@ import (
 )
 
 type MetricWriter struct {
-	prefix         string
-	tags           map[string]string
-	sender         senders.Sender
+	prefix      string
+	tags        map[string]string
+	sender      senders.Sender
+	metricsSent int64
+	numErrors   int64
+	errorRate   float64
 }
 
 var tagValueReplacer = strings.NewReplacer("\"", "\\\"", "*", "-")
