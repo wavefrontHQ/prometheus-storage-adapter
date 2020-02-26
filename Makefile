@@ -15,7 +15,7 @@ DOCKER_REPO=wavefronthq
 DOCKER_IMAGE=prometheus-storage-adapter
 VERSION=1.0.2
 
-all: deps build test
+all: tidy build test
 
 .PHONY build:
 build: 
@@ -35,16 +35,13 @@ run:
 	$(GOBUILD) -o $(BINARY_NAME) -v ./...
 	./$(BINARY_NAME)
 
-.PHONY dep:
-dep:
-ifeq ($(shell command -v dep 2> /dev/null),)
-	go get -u -v github.com/golang/dep/cmd/dep
-endif
 
-deps: dep
-	dep ensure -v
 
-build-all: deps build-linux build-darwin build-windows
+@PHONE tidy:
+tidy:
+	go mod tidy
+
+build-all: tidy build-linux build-darwin build-windows
 build-docker: build-linux
 	$(DOCKER) build -t $(DOCKER_REPO)/$(DOCKER_IMAGE):$(VERSION) .
 	$(DOCKER) tag $(DOCKER_REPO)/$(DOCKER_IMAGE):$(VERSION) $(DOCKER_REPO)/$(DOCKER_IMAGE):latest
