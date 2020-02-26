@@ -84,7 +84,7 @@ func (w *MetricWriter) buildTags(mTags map[string]string) (string, map[string]st
 	return tagValueReplacer.Replace(source), mTags
 }
 
-func (w *MetricWriter) HealtCheck() (int, string) {
+func (w *MetricWriter) HealthCheck() (int, string) {
 	tags := map[string]string{
 		"test": "test",
 	}

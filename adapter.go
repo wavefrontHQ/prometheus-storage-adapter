@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -15,6 +16,10 @@ import (
 	"github.com/prometheus/prometheus/prompb"
 	log "github.com/sirupsen/logrus"
 )
+
+type healthResult struct {
+	Message string
+}
 
 func parseTags(s string) map[string]string {
 	tags := make(map[string]string)
@@ -95,12 +100,19 @@ func main() {
 
 	// Install health checker
 	http.HandleFunc("/health", func(w http.ResponseWriter, request *http.Request) {
-		status, message := mw.HealtCheck()
-		message = fmt.Sprintf("{ \"status\" = \"%s\"", message)
+		status, message := mw.HealthCheck()
+		result := healthResult{
+			Message: message,
+		}
+		b, err := json.Marshal(&result)
+		if err != nil {
+			http.Error(w, "Irrecoverable error: " + err.Error(), 500)
+			return
+		}
 		if status != 200 {
-			http.Error(w, message, status)
+			http.Error(w, string(b), status)
 		} else {
-			fmt.Fprint(w, message)
+			fmt.Fprint(w, string(b))
 		}
 	})
 	log.Fatal(http.ListenAndServe(listen, nil))
