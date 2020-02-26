@@ -106,7 +106,7 @@ func main() {
 		}
 		b, err := json.Marshal(&result)
 		if err != nil {
-			http.Error(w, "Irrecoverable error: " + err.Error(), 500)
+			http.Error(w, "Irrecoverable error: "+err.Error(), 500)
 			return
 		}
 		if status != 200 {
