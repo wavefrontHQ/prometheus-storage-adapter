@@ -40,7 +40,7 @@ func main() {
 	var port int
 	flag.StringVar(&prefix, "prefix", "", "Prefix for metric names. If omitted, no prefix is added.")
 	flag.StringVar(&host, "proxy", "", "Host address to wavefront proxy.")
-	flag.IntVar(&port,"proxy-port", 2878, "Proxy port.")
+	flag.IntVar(&port, "proxy-port", 2878, "Proxy port.")
 	flag.StringVar(&listen, "listen", "", "Port/address to listen to on the format '[address:]port'. If no address is specified, the adapter listens to all interfaces.")
 	flag.StringVar(&tags, "tags", "", "A comma separated list of tags to be added to each point on the form \"tag1=value1,tag2=value2...\"")
 	debug := flag.Bool("debug", false, "Print detailed debug messages.")
@@ -67,6 +67,8 @@ func main() {
 		log.Fatal(err)
 		return
 	}
+
+	// Install metric receiver
 	http.HandleFunc("/receive", func(w http.ResponseWriter, r *http.Request) {
 		compressed, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -91,5 +93,15 @@ func main() {
 		mw.Write(req)
 	})
 
+	// Install health checker
+	http.HandleFunc("/health", func(w http.ResponseWriter, request *http.Request) {
+		status, message := mw.HealtCheck()
+		message = fmt.Sprintf("{ \"status\" = \"%s\"", message)
+		if status != 200 {
+			http.Error(w, message, status)
+		} else {
+			fmt.Fprint(w, message)
+		}
+	})
 	log.Fatal(http.ListenAndServe(listen, nil))
 }

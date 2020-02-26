@@ -4,6 +4,7 @@ import (
 	"github.com/wavefronthq/wavefront-sdk-go/senders"
 	"math"
 	"strings"
+	"time"
 
 	"github.com/prometheus/prometheus/prompb"
 	log "github.com/sirupsen/logrus"
@@ -81,4 +82,15 @@ func (w *MetricWriter) buildTags(mTags map[string]string) (string, map[string]st
 	}
 
 	return tagValueReplacer.Replace(source), mTags
+}
+
+func (w *MetricWriter) HealtCheck() (int, string) {
+	tags := map[string]string{
+		"test": "test",
+	}
+	err := w.sender.SendMetric("prom.gateway.healtcheck", 0, time.Now().Unix(), "", tags)
+	if err != nil {
+		return 503, err.Error()
+	}
+	return 200, "OK"
 }
