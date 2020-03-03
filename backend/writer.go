@@ -21,19 +21,12 @@ type MetricWriter struct {
 
 var tagValueReplacer = strings.NewReplacer("\"", "\\\"", "*", "-")
 
-func NewMetricWriter(host string, port int, prefix string, tags map[string]string) (*MetricWriter, error) {
-	sender, err := senders.NewProxySender(&senders.ProxyConfiguration{
-		Host:        host,
-		MetricsPort: port,
-	})
-	if err != nil {
-		return nil, err
-	}
+func NewMetricWriter(sender senders.Sender, prefix string, tags map[string]string) *MetricWriter {
 	return &MetricWriter{
 		sender: sender,
 		prefix: prefix,
 		tags:   tags,
-	}, nil
+	}
 }
 
 func (w *MetricWriter) Write(rq prompb.WriteRequest) {

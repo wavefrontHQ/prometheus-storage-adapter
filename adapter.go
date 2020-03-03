@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/wavefronthq/wavefront-sdk-go/senders"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -39,20 +40,40 @@ func parseTags(s string) map[string]string {
 
 func main() {
 	var prefix string
-	var host string
+	var proxy string
 	var listen string
 	var tags string
 	var port int
+	var url string
+	var token string
+	var batchSize int
+	var bufferSize int
+	var flushInterval int
 	flag.StringVar(&prefix, "prefix", "", "Prefix for metric names. If omitted, no prefix is added.")
-	flag.StringVar(&host, "proxy", "", "Host address to wavefront proxy.")
+	flag.StringVar(&proxy, "proxy", "", "Host address to wavefront proxy.")
 	flag.IntVar(&port, "proxy-port", 2878, "Proxy port.")
 	flag.StringVar(&listen, "listen", "", "Port/address to listen to on the format '[address:]port'. If no address is specified, the adapter listens to all interfaces.")
 	flag.StringVar(&tags, "tags", "", "A comma separated list of tags to be added to each point on the form \"tag1=value1,tag2=value2...\"")
+	flag.StringVar(&url, "url", "", "Wavefront URL for direct ingestion")
+	flag.StringVar(&token, "token", "", "Wavefront API token for direct ingestion")
 	debug := flag.Bool("debug", false, "Print detailed debug messages.")
+	flag.IntVar(&batchSize, "batch-size", 0, "Metric sending batch size (ignored in proxy mode)")
+	flag.IntVar(&bufferSize, "buffer-size", 0, "Metric buffer size (ignored in proxy mode")
+	flag.IntVar(&flushInterval, "flush-interval", 0, "Metric flush interval (in seconds)")
 	flag.Parse()
 
-	if host == "" {
-		fmt.Fprintln(os.Stderr, "Proxy address must be specified using the -proxy flag.")
+	if proxy == "" && url == "" {
+		fmt.Fprintln(os.Stderr, "Proxy address or Wavefront URL must be specified.")
+		os.Exit(1)
+	}
+
+	if proxy != "" && url != "" {
+		fmt.Fprintln(os.Stderr, "Proxy address and Wavefront are mutually exclusive.")
+		os.Exit(1)
+	}
+
+	if url != "" && token == "" {
+		fmt.Fprintln(os.Stderr, "API token must be specified for direct ingestion.")
 		os.Exit(1)
 	}
 
@@ -67,11 +88,30 @@ func main() {
 	if *debug {
 		log.SetLevel(log.DebugLevel)
 	}
-	mw, err := backend.NewMetricWriter(host, port, prefix, parseTags(tags))
+	var sender senders.Sender
+	var err error
+	if proxy != "" {
+		sender, err = senders.NewProxySender(
+			&senders.ProxyConfiguration{
+				Host:                 proxy,
+				MetricsPort:          port,
+				FlushIntervalSeconds: flushInterval,
+			})
+	} else {
+		sender, err = senders.NewDirectSender(
+			&senders.DirectConfiguration{
+				Server:               url,
+				Token:                token,
+				BatchSize:            batchSize,
+				MaxBufferSize:        bufferSize,
+				FlushIntervalSeconds: flushInterval,
+			})
+	}
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
+	mw := backend.NewMetricWriter(sender, prefix, parseTags(tags))
 
 	// Install metric receiver
 	http.HandleFunc("/receive", func(w http.ResponseWriter, r *http.Request) {

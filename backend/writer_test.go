@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/stretchr/testify/require"
+	"github.com/wavefronthq/wavefront-sdk-go/senders"
 	"net"
 	"strings"
 	"testing"
@@ -102,8 +103,12 @@ func TestRoundtrips(t *testing.T) {
 		}
 	}()
 
-	w, err := NewMetricWriter("localhost", 4711, "prom", map[string]string{})
+	sender, err := senders.NewProxySender(
+		&senders.ProxyConfiguration{
+			Host:                 "localhost", MetricsPort:          4711,
+		})
 	require.NoError(t, err)
+	w :=  NewMetricWriter(sender, "prom", map[string]string{})
 	for _, test := range testCases {
 		ts := prompb.TimeSeries{
 			Labels: []prompb.Label{
