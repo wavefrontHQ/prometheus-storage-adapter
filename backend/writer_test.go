@@ -105,10 +105,10 @@ func TestRoundtrips(t *testing.T) {
 
 	sender, err := senders.NewProxySender(
 		&senders.ProxyConfiguration{
-			Host:                 "localhost", MetricsPort:          4711,
+			Host: "localhost", MetricsPort: 4711,
 		})
 	require.NoError(t, err)
-	w :=  NewMetricWriter(sender, "prom", map[string]string{})
+	w := NewMetricWriter(sender, "prom", map[string]string{})
 	for _, test := range testCases {
 		ts := prompb.TimeSeries{
 			Labels: []prompb.Label{
