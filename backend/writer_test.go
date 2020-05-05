@@ -2,126 +2,158 @@ package backend
 
 import (
 	"bufio"
-	"bytes"
+	"fmt"
+	"github.com/stretchr/testify/require"
+	"github.com/wavefronthq/wavefront-sdk-go/senders"
 	"net"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/prometheus/prometheus/prompb"
 )
 
-func TestWrite(t *testing.T) {
-	m := metricPoint{
-		Metric: "decontribulator.temperature",
-		Source: "main decontribulator",
-		Value:  42,
-		Tags:   map[string]string{"carbendingulator": "S-1103347P1"},
-	}
-	w := MetricWriter{
-		prefix: "xyz",
-	}
-	var buf bytes.Buffer
-	bw := bufio.NewWriter(&buf)
-	if err := w.writeMetricPoint(bw, &m); err != nil {
-		t.Errorf("Error while writing metrics: %s", err)
-	}
-	bw.Flush()
-	if buf.String() != "decontribulator.temperature 42.000000 0 source=\"main decontribulator\" carbendingulator=\"S-1103347P1\"\n" {
-		t.Errorf("Resulting string was: %s", buf.String())
-	}
+type testCase struct {
+	metric      string
+	finalMetric string
+	source      string
+	finalSource string
+	tags        []string
+	finalTags   []string
 }
 
-func TestSanitizeName(t *testing.T) {
-	s := "ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvxyz-"
-	if ss := sanitizeName(s); ss != s {
-		t.Errorf("Resulting string was: %s", s)
-	}
+var timestamp = int64(1146225600)
 
-	s = "this-IS-a-ReAlLy-COMPLEX-name-that-SHOULD-be-LEFT-unTOUCHED"
-	if ss := sanitizeName(s); ss != s {
-		t.Errorf("Resulting string was: %s", s)
-	}
-
-	s = sanitizeName(" this has a_leading*illegal(char")
-	if "-this-has-a.leading-illegal-char" != s {
-		t.Errorf("Resulting string was: %s", s)
-	}
-
-	s = sanitizeName("this has a_trailing*illegal(char=")
-	if "this-has-a.trailing-illegal-char-" != s {
-		t.Errorf("Resulting string was: %s", s)
-	}
-
-	s = sanitizeName("underscores_should_be_turned_into_periods")
-	if "underscores.should.be.turned.into.periods" != s {
-		t.Errorf("Resulting string was: %s", s)
-	}
-
-	s = sanitizeName("Some Chinese: 波前的岩石")
-	if "Some-Chinese-------" != s {
-		t.Errorf("Resulting string was: %s", s)
-	}
+var testCases = []testCase{
+	{
+		metric:      "cpu_utilization_percent",
+		finalMetric: "prom_cpu_utilization_percent",
+		source:      "localhost",
+		finalSource: "localhost",
+		tags: []string{
+			"bar=foo",
+			"foo=bar",
+			"cpu=1",
+		},
+		finalTags: []string{
+			"\"bar\"=\"foo\"",
+			"\"foo\"=\"bar\"",
+			"\"cpu\"=\"1\"",
+		},
+	},
+	{
+		metric:      "cpu.utilization.gigatons",
+		finalMetric: "prom_cpu.utilization.gigatons",
+		source:      "this.is.a.host.com",
+		finalSource: "this.is.a.host.com",
+		tags: []string{
+			"bar!foo=foo!bar",
+			"foo_bar=bar_foo",
+			"number.of.cpus=1",
+		},
+		finalTags: []string{
+			"\"bar-foo\"=\"foo!bar\"",
+			"\"foo_bar\"=\"bar_foo\"",
+			"\"number.of.cpus\"=\"1\"",
+		},
+	},
+	{
+		metric:      "Heavily!@#$%Subbed",
+		finalMetric: "prom_Heavily-----Subbed",
+		source:      "some)(*&^source",
+		finalSource: "some-----source",
+		tags: []string{
+			"bar!@#$%foo=foo!bar",
+			"foo_bar=bar_foo",
+			"number.of.cpus=1",
+		},
+		finalTags: []string{
+			"\"bar-----foo\"=\"foo!bar\"",
+			"\"foo_bar\"=\"bar_foo\"",
+			"\"number.of.cpus\"=\"1\"",
+		},
+	},
 }
 
-func TestFull(t *testing.T) {
+func TestRoundtrips(t *testing.T) {
+	var conn net.Conn
 	response := make(chan (string))
 	// Spin up a minimal listener to simulate a proxy
 	go func() {
 		ln, err := net.Listen("tcp", ":4711")
-		if err != nil {
-			// handle error
-		}
+		require.NoError(t, err)
 		for {
-			conn, err := ln.Accept()
+			conn, err = ln.Accept()
 			if err != nil {
 				// handle error
 			}
-			defer conn.Close()
 			br := bufio.NewReader(conn)
-			s, err := br.ReadString('\n')
-			if err != nil {
-				t.Error(err)
+			for {
+				// Yes. Infinite loop.
+				// We'll close the connection when we're done listening. This will drop us out of here.
+				s, err := br.ReadString('\n')
+				if err != nil {
+					if strings.Contains(err.Error(), "use of closed network connection") {
+						return
+					}
+					t.Error(err)
+				}
+				response <- s
 			}
-			response <- s
 		}
 	}()
 
-	// Create a client and send a single metric through
-	w := NewMetricWriter("localhost:4711", "prom", map[string]string{"foo": "bar", "bar": "foo"})
-	ts := prompb.TimeSeries{
-		Labels: []prompb.Label{
-			prompb.Label{
-				Name:  "__name__",
-				Value: "cpu_utilization_percent",
+	sender, err := senders.NewProxySender(
+		&senders.ProxyConfiguration{
+			Host: "localhost", MetricsPort: 4711,
+		})
+	require.NoError(t, err)
+	w := NewMetricWriter(sender, "prom", map[string]string{})
+	for _, test := range testCases {
+		ts := prompb.TimeSeries{
+			Labels: []prompb.Label{
+				prompb.Label{
+					Name:  "__name__",
+					Value: test.metric,
+				},
+				prompb.Label{
+					Name:  "instance",
+					Value: test.source,
+				},
 			},
-			prompb.Label{
-				Name:  "instance",
-				Value: "localhost",
+			Samples: []prompb.Sample{
+				prompb.Sample{
+					Value:     50,
+					Timestamp: timestamp,
+				},
 			},
-			prompb.Label{
-				Name:  "cpu",
-				Value: "1",
-			},
-		},
-		Samples: []prompb.Sample{
-			prompb.Sample{
-				Value:     50,
-				Timestamp: 1086062400,
-			},
-		},
+		}
+		for _, tag := range test.tags {
+			pair := strings.Split(tag, "=")
+			ts.Labels = append(ts.Labels, prompb.Label{
+				Name:  pair[0],
+				Value: pair[1],
+			})
+		}
+		req := prompb.WriteRequest{
+			Timeseries: []prompb.TimeSeries{ts},
+		}
+		w.Write(req)
 	}
-	req := prompb.WriteRequest{
-		Timeseries: []prompb.TimeSeries{ts},
-	}
-	w.Write(req)
 
-	// Wait for reply
-	select {
-	case <-time.After(10 * time.Second):
-		t.Error("Times out waiting for metrics")
-	case s := <-response:
-		if s != "prom.cpu.utilization.percent 50.000000 1086062400 source=\"localhost\" bar=\"foo\" cpu=\"1\" foo=\"bar\"\n" {
-			t.Errorf("Received from sender: %s", s)
+	// Wait for replies
+	for _, test := range testCases {
+		select {
+		case <-time.After(10 * time.Second):
+			t.Error("Timed out waiting for metrics")
+		case s := <-response:
+			linePrefix := fmt.Sprintf("\"%s\" 50 %d source=\"%s\"", test.finalMetric, timestamp, test.finalSource)
+			require.Equal(t, linePrefix, s[0:len(linePrefix)])
+			r := []rune(s)
+			require.Equal(t, '\n', r[len(r)-1])
+			parts := append(strings.Split(linePrefix, " "), test.finalTags...)
+			require.ElementsMatch(t, parts, strings.Split(strings.Trim(s, "\n"), " "))
 		}
 	}
+	conn.Close()
 }
