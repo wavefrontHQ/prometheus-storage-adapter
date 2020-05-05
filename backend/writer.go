@@ -13,21 +13,23 @@ import (
 )
 
 type MetricWriter struct {
-	prefix      string
-	tags        map[string]string
-	sender      senders.Sender
-	metricsSent int64
-	numErrors   int64
-	errorRate   float64
+	prefix       string
+	tags         map[string]string
+	sender       senders.Sender
+	convertPaths bool
+	metricsSent  int64
+	numErrors    int64
+	errorRate    float64
 }
 
 var tagValueReplacer = strings.NewReplacer("\"", "\\\"", "*", "-")
 
-func NewMetricWriter(sender senders.Sender, prefix string, tags map[string]string) *MetricWriter {
+func NewMetricWriter(sender senders.Sender, prefix string, tags map[string]string, convertPaths bool) *MetricWriter {
 	return &MetricWriter{
-		sender: sender,
-		prefix: prefix,
-		tags:   tags,
+		sender:       sender,
+		prefix:       prefix,
+		tags:         tags,
+		convertPaths: convertPaths,
 	}
 }
 
@@ -42,11 +44,8 @@ func (w *MetricWriter) writeMetrics(ts *prompb.TimeSeries) {
 	for _, l := range ts.Labels {
 		tags[l.Name] = l.Value
 	}
-	fieldName := tags["__name__"]
+	fieldName := w.buildName(tags["__name__"])
 	delete(tags, "__name__")
-	if w.prefix != "" {
-		fieldName = w.prefix + "_" + fieldName
-	}
 	for _, value := range ts.Samples {
 		// Prometheus sometimes sends NaN samples. We interpret them as
 		// missing data and simply skip them.
@@ -59,6 +58,16 @@ func (w *MetricWriter) writeMetrics(ts *prompb.TimeSeries) {
 			log.Warnf("Cannot send metric: %s. Reason: %s. Skipping to next", fieldName, err)
 		}
 	}
+}
+
+func (w *MetricWriter) buildName(name string) string {
+	if w.prefix != "" {
+		name = w.prefix + "_" + name
+	}
+	if w.convertPaths {
+		name = strings.Replace(name, "_", ".", -1)
+	}
+	return name
 }
 
 func (w *MetricWriter) buildTags(mTags map[string]string) (string, map[string]string) {

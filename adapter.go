@@ -48,6 +48,7 @@ func main() {
 	var batchSize int
 	var bufferSize int
 	var flushInterval int
+	var convertPaths bool
 
 	flag.StringVar(&prefix, "prefix", "", "Prefix for metric names. If omitted, no prefix is added.")
 	flag.StringVar(&proxy, "proxy", "", "Host address to wavefront proxy.")
@@ -58,8 +59,9 @@ func main() {
 	flag.StringVar(&token, "token", "", "Wavefront API token for direct ingestion")
 	debug := flag.Bool("debug", false, "Print detailed debug messages.")
 	flag.IntVar(&batchSize, "batch-size", 0, "Metric sending batch size (ignored in proxy mode)")
-	flag.IntVar(&bufferSize, "buffer-size", 0, "Metric buffer size (ignored in proxy mode")
+	flag.IntVar(&bufferSize, "buffer-size", 0, "Metric buffer size (ignored in proxy mode)")
 	flag.IntVar(&flushInterval, "flush-interval", 0, "Metric flush interval (in seconds)")
+	flag.BoolVar(&convertPaths, "convert-paths", true, "Convert metric names to use period instead of underscores.")
 	flag.Parse()
 
 	if proxy == "" && url == "" {
@@ -107,7 +109,7 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-	mw := backend.NewMetricWriter(sender, prefix, parseTags(tags))
+	mw := backend.NewMetricWriter(sender, prefix, parseTags(tags), convertPaths)
 
 	// Install metric receiver
 	http.HandleFunc("/receive", func(w http.ResponseWriter, r *http.Request) {

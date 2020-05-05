@@ -3,14 +3,14 @@ package backend
 import (
 	"bufio"
 	"fmt"
-	"github.com/stretchr/testify/require"
-	"github.com/wavefronthq/wavefront-sdk-go/senders"
 	"net"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/prometheus/prometheus/prompb"
+	"github.com/stretchr/testify/require"
+	"github.com/wavefronthq/wavefront-sdk-go/senders"
 )
 
 type testCase struct {
@@ -77,7 +77,7 @@ var testCases = []testCase{
 
 func TestRoundtrips(t *testing.T) {
 	var conn net.Conn
-	response := make(chan (string))
+	response := make(chan string)
 	// Spin up a minimal listener to simulate a proxy
 	go func() {
 		ln, err := net.Listen("tcp", ":4711")
@@ -108,7 +108,7 @@ func TestRoundtrips(t *testing.T) {
 			Host: "localhost", MetricsPort: 4711,
 		})
 	require.NoError(t, err)
-	w := NewMetricWriter(sender, "prom", map[string]string{})
+	w := NewMetricWriter(sender, "prom", map[string]string{}, false)
 	for _, test := range testCases {
 		ts := prompb.TimeSeries{
 			Labels: []prompb.Label{
@@ -156,4 +156,34 @@ func TestRoundtrips(t *testing.T) {
 		}
 	}
 	conn.Close()
+}
+
+func TestBuildName(t *testing.T) {
+	sender, err := senders.NewProxySender(
+		&senders.ProxyConfiguration{
+			Host: "localhost", MetricsPort: 4711,
+		})
+	require.NoError(t, err)
+
+	testName := "metric_name_with_underscore"
+
+	// empty prefix and convert=true
+	w := NewMetricWriter(sender, "", map[string]string{}, true)
+	name := w.buildName(testName)
+	require.Equal(t, "metric.name.with.underscore", name)
+
+	// empty prefix and convert=false
+	w = NewMetricWriter(sender, "", map[string]string{}, false)
+	name = w.buildName(testName)
+	require.Equal(t, testName, name)
+
+	// non-empty prefix and convert=true
+	w = NewMetricWriter(sender, "prom", map[string]string{}, true)
+	name = w.buildName(testName)
+	require.Equal(t, "prom.metric.name.with.underscore", name)
+
+	// non-empty prefix and convert=false
+	w = NewMetricWriter(sender, "prom", map[string]string{}, false)
+	name = w.buildName(testName)
+	require.Equal(t, "prom_"+testName, name)
 }
