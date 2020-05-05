@@ -1,13 +1,15 @@
 package backend
 
 import (
-	"github.com/wavefronthq/wavefront-sdk-go/senders"
 	"math"
 	"strings"
 	"time"
 
-	"github.com/prometheus/prometheus/prompb"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/prometheus/prometheus/prompb"
+
+	"github.com/wavefronthq/wavefront-sdk-go/senders"
 )
 
 type MetricWriter struct {
@@ -63,11 +65,16 @@ func (w *MetricWriter) buildTags(mTags map[string]string) (string, map[string]st
 	// Remove all empty tags.
 	for k, v := range mTags {
 		if v == "" {
+			log.Debugf("dropping empty tag %s", k)
 			delete(mTags, k)
 		}
 	}
-	source := mTags["instance"]
-	delete(mTags, "instance")
+
+	source := ""
+	if val, ok := mTags["instance"]; ok {
+		source = val
+		delete(mTags, "instance")
+	}
 
 	// Add optional tags
 	for k, v := range w.tags {
@@ -81,7 +88,7 @@ func (w *MetricWriter) HealthCheck() (int, string) {
 	tags := map[string]string{
 		"test": "test",
 	}
-	err := w.sender.SendMetric("prom.gateway.healtcheck", 0, time.Now().Unix(), "", tags)
+	err := w.sender.SendMetric("prom.gateway.healthcheck", 0, time.Now().Unix(), "", tags)
 	if err != nil {
 		return 503, err.Error()
 	}

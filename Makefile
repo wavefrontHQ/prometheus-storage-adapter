@@ -13,7 +13,7 @@ BINARY_WINDOWS=$(TARGET)/$(BINARY_NAME)_windows.EXE
 
 DOCKER_REPO=wavefronthq
 DOCKER_IMAGE=prometheus-storage-adapter
-VERSION=1.0.2
+VERSION=1.0.3
 
 all: tidy build test
 

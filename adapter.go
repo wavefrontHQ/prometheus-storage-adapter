@@ -4,18 +4,18 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/wavefronthq/wavefront-sdk-go/senders"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
+
+	"github.com/wavefronthq/prometheus-storage-adapter/backend"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
-	"github.com/wavefronthq/prometheus-storage-adapter/backend"
-
 	"github.com/prometheus/prometheus/prompb"
-	log "github.com/sirupsen/logrus"
+	"github.com/wavefronthq/wavefront-sdk-go/senders"
 )
 
 type healthResult struct {
@@ -30,8 +30,7 @@ func parseTags(s string) map[string]string {
 	for _, tag := range strings.Split(s, ",") {
 		l := strings.Split(tag, "=")
 		if len(l) != 2 {
-			fmt.Fprintln(os.Stderr, "Tags must be formatted as \"tag=value,tag2=value...\"")
-			os.Exit(1)
+			log.Fatal("tags must be formatted as \"tag=value,tag2=value...\"")
 		}
 		tags[strings.TrimSpace(l[0])] = strings.TrimSpace(l[1])
 	}
@@ -49,6 +48,7 @@ func main() {
 	var batchSize int
 	var bufferSize int
 	var flushInterval int
+
 	flag.StringVar(&prefix, "prefix", "", "Prefix for metric names. If omitted, no prefix is added.")
 	flag.StringVar(&proxy, "proxy", "", "Host address to wavefront proxy.")
 	flag.IntVar(&port, "proxy-port", 2878, "Proxy port.")
@@ -63,23 +63,19 @@ func main() {
 	flag.Parse()
 
 	if proxy == "" && url == "" {
-		fmt.Fprintln(os.Stderr, "Proxy address or Wavefront URL must be specified.")
-		os.Exit(1)
+		log.Fatal("Proxy address or Wavefront URL must be specified.")
 	}
 
 	if proxy != "" && url != "" {
-		fmt.Fprintln(os.Stderr, "Proxy address and Wavefront are mutually exclusive.")
-		os.Exit(1)
+		log.Fatal("Proxy address and Wavefront URL are mutually exclusive.")
 	}
 
 	if url != "" && token == "" {
-		fmt.Fprintln(os.Stderr, "API token must be specified for direct ingestion.")
-		os.Exit(1)
+		log.Fatal("API token must be specified for direct ingestion.")
 	}
 
 	if listen == "" {
-		fmt.Fprintln(os.Stderr, "Listening port must be specified using the -listen flag.")
-		os.Exit(1)
+		log.Fatal("Listening port must be specified using the -listen flag.")
 	}
 	if !strings.Contains(listen, ":") {
 		listen = ":" + listen
