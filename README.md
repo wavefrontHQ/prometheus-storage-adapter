@@ -5,25 +5,26 @@ Prometheus storage adapters can act as a "fork" and send data to a secondary loc
 
 ## Installation
 
+### Helm install for Kubernetes
+Refer to the [helm chart](https://github.com/wavefrontHQ/helm#installation) to install the storage adapter in Kubernetes.
+
 ### Download binaries
-Prebuilt binaries for Linux, MacOSX and Windows are available here https://github.com/wavefrontHQ/prometheus-storage-adapter/releases
+Prebuilt binaries for Linux, macOS and Windows are available [here](https://github.com/wavefrontHQ/prometheus-storage-adapter/releases).
 
 ### Building from source
-Building from source is easy. Simply grab the code with go get and build it with make.
+To build from source:
 
-1. Download the source
+1. Download the source:
 ```
 go get github.com/wavefronthq/prometheus-storage-adapter
 ```
-2. Build it
+2. Build it:
 ```
 cd $(GOPATH)/src/github.com/wavefronthq/prometheus-storage-adapter
 make deps build
 ```
 
-## Running the adapter
-You can run the adapter directly from the command line, but in production you would probably make it a service that starts at system boot time.
-
+## Configuration
 The adapter takes the following parameters:
 ```
 -debug
@@ -40,27 +41,30 @@ The adapter takes the following parameters:
     A comma separated list of tags to be added to each point on the form "tag1=value1,tag2=value2..."
 ```
 
-### Example
-To run the adapter listening to port 1234 and sending results to localhost:2878, we can use the following command. This command also adds a prefix ("prom") to all metrics coming from the adapter.
+### Standalone example
+To have an adapter listen on port 1234 and forward the data to a Proxy running at localhost:2878 and use a metrics prefix of `prom`:
 ```
 ./adapter -proxy localhost -proxy-port 2878 -listen 1234 -prefix prom
 ```
 
-## Running the adapter in a Docker container
-The adapter is available as a Docker image. To run it, simply type ```docker run wavefronthq/prometheus-storage-adapter``` with the parameters discussed above, for example:
+## Docker container example
+The adapter is available as a Docker image.
+
+To run it as a docker container with the parameters discussed above:
 ```
 docker run wavefronthq/prometheus-storage-adapter -proxy localhost -proxy-port 2878 -listen 1234 -prefix prom
 ```
 
 ## Integrating with Prometheus
-Integrating the adapter with Prometheus only takes a small change to the prometheus.yml config file. All you have to do is to add these two lines to the end of prometheus.yml:
+Integrating the adapter with Prometheus requires a small change to the prometheus.yml config file. All you have to do is to add these two lines to the end of prometheus.yml:
 
 ```
 remote_write:
   - url: "http://localhost:1234/receive"
 ```
+**Note:** Replace `localhost:1234` with the hostname/port of the prometheus storage adapter.
 
-Once you have saved the config file, you need to restart Prometheus.
+Restart Prometheus once you have saved the config file.
 
 [ci-img]: https://travis-ci.com/wavefrontHQ/prometheus-storage-adapter.svg?branch=master
 [ci]: https://travis-ci.com/wavefrontHQ/prometheus-storage-adapter
