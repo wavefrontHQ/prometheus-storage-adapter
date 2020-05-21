@@ -61,7 +61,7 @@ func main() {
 	flag.IntVar(&batchSize, "batch-size", 0, "Metric sending batch size (ignored in proxy mode)")
 	flag.IntVar(&bufferSize, "buffer-size", 0, "Metric buffer size (ignored in proxy mode)")
 	flag.IntVar(&flushInterval, "flush-interval", 0, "Metric flush interval (in seconds)")
-	flag.BoolVar(&convertPaths, "convert-paths", true, "Convert metric names to use period instead of underscores.")
+	flag.BoolVar(&convertPaths, "convert-paths", true, "Convert metric names/tags to use period instead of underscores.")
 	flag.Parse()
 
 	if proxy == "" && url == "" {

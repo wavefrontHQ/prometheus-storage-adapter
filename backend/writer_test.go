@@ -169,21 +169,21 @@ func TestBuildName(t *testing.T) {
 
 	// empty prefix and convert=true
 	w := NewMetricWriter(sender, "", map[string]string{}, true)
-	name := w.buildName(testName)
+	name := w.buildMetricName(testName)
 	require.Equal(t, "metric.name.with.underscore", name)
 
 	// empty prefix and convert=false
 	w = NewMetricWriter(sender, "", map[string]string{}, false)
-	name = w.buildName(testName)
+	name = w.buildMetricName(testName)
 	require.Equal(t, testName, name)
 
 	// non-empty prefix and convert=true
 	w = NewMetricWriter(sender, "prom", map[string]string{}, true)
-	name = w.buildName(testName)
+	name = w.buildMetricName(testName)
 	require.Equal(t, "prom.metric.name.with.underscore", name)
 
 	// non-empty prefix and convert=false
 	w = NewMetricWriter(sender, "prom", map[string]string{}, false)
-	name = w.buildName(testName)
+	name = w.buildMetricName(testName)
 	require.Equal(t, "prom_"+testName, name)
 }

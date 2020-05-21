@@ -42,9 +42,10 @@ func (w *MetricWriter) Write(rq prompb.WriteRequest) {
 func (w *MetricWriter) writeMetrics(ts *prompb.TimeSeries) {
 	tags := make(map[string]string, len(ts.Labels))
 	for _, l := range ts.Labels {
-		tags[l.Name] = l.Value
+		tagName := w.buildTagName(l.Name)
+		tags[tagName] = l.Value
 	}
-	fieldName := w.buildName(tags["__name__"])
+	fieldName := w.buildMetricName(tags["__name__"])
 	delete(tags, "__name__")
 	for _, value := range ts.Samples {
 		// Prometheus sometimes sends NaN samples. We interpret them as
@@ -60,11 +61,18 @@ func (w *MetricWriter) writeMetrics(ts *prompb.TimeSeries) {
 	}
 }
 
-func (w *MetricWriter) buildName(name string) string {
+func (w *MetricWriter) buildMetricName(name string) string {
 	if w.prefix != "" {
 		name = w.prefix + "_" + name
 	}
 	if w.convertPaths {
+		name = strings.Replace(name, "_", ".", -1)
+	}
+	return name
+}
+
+func (w *MetricWriter) buildTagName(name string) string {
+	if name != "__name__" && w.convertPaths {
 		name = strings.Replace(name, "_", ".", -1)
 	}
 	return name
