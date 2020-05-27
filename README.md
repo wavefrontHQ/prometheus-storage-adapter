@@ -29,6 +29,8 @@ The adapter takes the following parameters:
 ```
 -debug
     Print detailed debug messages.
+-convert-paths
+  	Convert metric names/tags to use period instead of underscores. (default true)    
 -listen string
     Port/address to listen to on the format '[address:]port'. If no address is specified, the adapter listens to all interfaces.
 -prefix string
