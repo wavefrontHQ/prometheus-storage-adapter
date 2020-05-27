@@ -61,7 +61,7 @@ var testCases = []testCase{
 		metric:      "Heavily!@#$%Subbed",
 		finalMetric: "prom_Heavily-----Subbed",
 		source:      "some)(*&^source",
-		finalSource: "some-----source",
+		finalSource: "some)(-&^source",
 		tags: []string{
 			"bar!@#$%foo=foo!bar",
 			"foo_bar=bar_foo",
