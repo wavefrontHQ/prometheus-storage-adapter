@@ -54,7 +54,7 @@ The adapter is available as a Docker image.
 
 To run it as a docker container with the parameters discussed above:
 ```
-docker run wavefronthq/prometheus-storage-adapter -proxy localhost -proxy-port 2878 -listen 1234 -prefix prom
+docker run wavefronthq/prometheus-storage-adapter -proxy=localhost -proxy-port=2878 -listen=1234 -prefix=prom -convert-paths=true
 ```
 
 ## Integrating with Prometheus
