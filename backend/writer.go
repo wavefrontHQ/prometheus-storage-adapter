@@ -54,7 +54,12 @@ func (w *MetricWriter) writeMetrics(ts *prompb.TimeSeries) {
 			continue
 		}
 		source, finalTags := w.buildTags(tags)
-		err := w.sender.SendMetric(fieldName, value.Value, value.Timestamp, source, finalTags)
+		err := w.sender.SendMetric(
+			fieldName,
+			value.Value,
+			roundUpToNearestSecond(value.Timestamp),
+			source,
+			finalTags)
 		if err != nil {
 			log.Warnf("Cannot send metric: %s. Reason: %s. Skipping to next", fieldName, err)
 		}
@@ -110,4 +115,10 @@ func (w *MetricWriter) HealthCheck() (int, string) {
 		return 503, err.Error()
 	}
 	return 200, "OK"
+}
+
+// roundUpToNearestSecond rounds milliseconds up to the nearest second and
+// returns that value in millisecons. So 123000 -> 123000 and 123001 -> 124000
+func roundUpToNearestSecond(milliseconds int64) int64 {
+	return ((milliseconds + 1000 - 1) / 1000) * 1000
 }
