@@ -147,7 +147,7 @@ func TestRoundtrips(t *testing.T) {
 		case <-time.After(10 * time.Second):
 			t.Error("Timed out waiting for metrics")
 		case s := <-response:
-			linePrefix := fmt.Sprintf("\"%s\" 50 %d source=\"%s\"", test.finalMetric, timestamp, test.finalSource)
+			linePrefix := fmt.Sprintf("\"%s\" 50 %d source=\"%s\"", test.finalMetric, roundUpToNearestSecond(timestamp), test.finalSource)
 			require.Equal(t, linePrefix, s[0:len(linePrefix)])
 			r := []rune(s)
 			require.Equal(t, '\n', r[len(r)-1])
