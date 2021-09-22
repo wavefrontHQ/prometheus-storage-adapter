@@ -54,7 +54,7 @@ func (fl *metricsFilter) Set(value string) error {
 	//We are going to expect the arguments in <key>=<value> comma separated pairs.
 	//We will then split them and assign it to staticMap for further filtering
 	//in the backend.
-	tmp := make(map[string]string,0)
+	tmp := make(map[string]string, 0)
 	for _, dt := range strings.Split(value, ",") {
 		p := strings.Split(dt, "=")
 		if len(p) < 2 {
@@ -92,11 +92,10 @@ func main() {
 	flag.IntVar(&bufferSize, "buffer-size", 0, "Metric buffer size (ignored in proxy mode)")
 	flag.IntVar(&flushInterval, "flush-interval", 0, "Metric flush interval (in seconds)")
 	flag.BoolVar(&convertPaths, "convert-paths", true, "Convert metric names/tags to use period instead of underscores.")
-	flag.Var(&metricsFilter, "metrics-name-override"," list of name and overrides in the format 'key1=value1, key2,value2.....'\n" +
-		" key = original name of the metrics which is coming from prometheus \n" +
-		" value =  name user wish to override with \n" +
+	flag.Var(&metricsFilter, "metrics-name-override", " list of name and overrides in the format 'key1=value1, key2,value2.....'\n"+
+		" key = original name of the metrics which is coming from prometheus \n"+
+		" value =  name user wish to override with \n"+
 		" no prefix and pathConversion will be applied to these metrics")
-
 
 	flag.Parse()
 

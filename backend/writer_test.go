@@ -40,7 +40,6 @@ var testCases = []testCase{
 			"\"foo\"=\"bar\"",
 			"\"cpu\"=\"1\"",
 		},
-
 	},
 	{
 		metric:      "cpu.utilization.gigatons",
@@ -126,22 +125,22 @@ func TestRoundtrips(t *testing.T) {
 		})
 	require.NoError(t, err)
 	w := NewMetricWriter(sender, "prom", map[string]string{}, false, map[string]string{
-		"status_request_per_second":"status.request_per_second",
+		"status_request_per_second": "status.request_per_second",
 	})
 	for _, test := range testCases {
 		ts := prompb.TimeSeries{
 			Labels: []prompb.Label{
-				prompb.Label{
+				{
 					Name:  "__name__",
 					Value: test.metric,
 				},
-				prompb.Label{
+				{
 					Name:  "instance",
 					Value: test.source,
 				},
 			},
 			Samples: []prompb.Sample{
-				prompb.Sample{
+				{
 					Value:     50,
 					Timestamp: timestamp,
 				},
@@ -185,7 +184,7 @@ func TestBuildName(t *testing.T) {
 	require.NoError(t, err)
 
 	testName := "metric_name_with_underscore"
-	filters := make(map[string]string,  0)
+	filters := make(map[string]string, 0)
 	// empty prefix and convert=true
 	w := NewMetricWriter(sender, "", map[string]string{}, true, filters)
 	name := w.buildMetricName(testName)
@@ -207,8 +206,8 @@ func TestBuildName(t *testing.T) {
 	require.Equal(t, "prom_"+testName, name)
 
 	filters = map[string]string{
-		"metrics_availability":"metrics.availability",
-		"metrics_request_per_second":"metrics.request_per_second",
+		"metrics_availability":       "metrics.availability",
+		"metrics_request_per_second": "metrics.request_per_second",
 	}
 
 	//filter metrics that should not have any prefix and names would be set to custom value

@@ -35,7 +35,9 @@ run:
 	$(GOBUILD) -o $(BINARY_NAME) -v ./...
 	./$(BINARY_NAME)
 
-
+.PHONY fmt:
+fmt:
+	find . -type f -name "*.go" | grep -v "./vendor*" | xargs gofmt -s -w
 
 @PHONE tidy:
 tidy:
