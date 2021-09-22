@@ -37,6 +37,35 @@ func parseTags(s string) map[string]string {
 	return tags
 }
 
+//struct to define the custom type to handle the arguments in key=value pair format.
+type metricsFilter struct {
+	filter map[string]string
+}
+
+// String is the method to format the flag's value, part of the flag.Value interface.
+// The String method's output will be used in diagnostics.
+func (fl *metricsFilter) String() string {
+	return fmt.Sprint(*fl)
+}
+
+// Set is the method to set the flag value, part of the flag.Value interface.
+// Set's argument is a string to be parsed to set the flag.
+func (fl *metricsFilter) Set(value string) error {
+	//We are going to expect the arguments in <key>=<value> comma separated pairs.
+	//We will then split them and assign it to staticMap for further filtering
+	//in the backend.
+	tmp := make(map[string]string,0)
+	for _, dt := range strings.Split(value, ",") {
+		p := strings.Split(dt, "=")
+		if len(p) < 2 {
+			log.Fatal("arguments to override always needs to be in : 'key1=value1,key2=value' format")
+		}
+		tmp[p[0]] = p[1]
+	}
+	fl.filter = tmp
+	return nil
+}
+
 func main() {
 	var prefix string
 	var proxy string
@@ -49,6 +78,7 @@ func main() {
 	var bufferSize int
 	var flushInterval int
 	var convertPaths bool
+	var metricsFilter metricsFilter
 
 	flag.StringVar(&prefix, "prefix", "", "Prefix for metric names. If omitted, no prefix is added.")
 	flag.StringVar(&proxy, "proxy", "", "Host address to wavefront proxy.")
@@ -62,6 +92,12 @@ func main() {
 	flag.IntVar(&bufferSize, "buffer-size", 0, "Metric buffer size (ignored in proxy mode)")
 	flag.IntVar(&flushInterval, "flush-interval", 0, "Metric flush interval (in seconds)")
 	flag.BoolVar(&convertPaths, "convert-paths", true, "Convert metric names/tags to use period instead of underscores.")
+	flag.Var(&metricsFilter, "metrics-name-override"," list of name and overrides in the format 'key1=value1, key2,value2.....'\n" +
+		" key = original name of the metrics which is coming from prometheus \n" +
+		" value =  name user wish to override with \n" +
+		" no prefix and pathConversion will be applied to these metrics")
+
+
 	flag.Parse()
 
 	if proxy == "" && url == "" {
@@ -86,6 +122,7 @@ func main() {
 	if *debug {
 		log.SetLevel(log.DebugLevel)
 	}
+
 	var sender senders.Sender
 	var err error
 	if proxy != "" {
@@ -109,7 +146,7 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-	mw := backend.NewMetricWriter(sender, prefix, parseTags(tags), convertPaths)
+	mw := backend.NewMetricWriter(sender, prefix, parseTags(tags), convertPaths, metricsFilter.filter)
 
 	// Install metric receiver
 	http.HandleFunc("/receive", func(w http.ResponseWriter, r *http.Request) {

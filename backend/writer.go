@@ -20,18 +20,23 @@ type MetricWriter struct {
 	metricsSent  int64
 	numErrors    int64
 	errorRate    float64
+	filters		 map[string]string
 }
 
 var tagValueReplacer = strings.NewReplacer("\"", "\\\"", "*", "-")
 
-func NewMetricWriter(sender senders.Sender, prefix string, tags map[string]string, convertPaths bool) *MetricWriter {
+func NewMetricWriter(sender senders.Sender, prefix string, tags map[string]string, convertPaths bool, filters map[string]string) *MetricWriter {
 	return &MetricWriter{
 		sender:       sender,
 		prefix:       prefix,
 		tags:         tags,
 		convertPaths: convertPaths,
+		filters: filters,
+
 	}
 }
+
+
 
 func (w *MetricWriter) Write(rq prompb.WriteRequest) {
 	for _, ts := range rq.Timeseries {
@@ -67,6 +72,21 @@ func (w *MetricWriter) writeMetrics(ts *prompb.TimeSeries) {
 }
 
 func (w *MetricWriter) buildMetricName(name string) string {
+	//if the metric is present in the filter then we are going to ignore it.
+	// We are going to return the name which came in filter, a custom value.
+	// No prefix should be appended to this metrics.
+	//if user by mistake just pass "key1=" we are going to let it through normal process.
+
+	if len(w.filters)!=0{
+		if val, ok := w.filters[name];ok {
+			if val != ""{
+				return val
+			}else{
+				log.Debugf("filter %s came with out value, this is incorrect.", name)
+			}
+		}
+	}
+
 	if w.prefix != "" {
 		name = w.prefix + "_" + name
 	}
