@@ -20,7 +20,7 @@ type MetricWriter struct {
 	metricsSent  int64
 	numErrors    int64
 	errorRate    float64
-	filters		 map[string]string
+	filters      map[string]string
 }
 
 var tagValueReplacer = strings.NewReplacer("\"", "\\\"", "*", "-")
@@ -31,12 +31,9 @@ func NewMetricWriter(sender senders.Sender, prefix string, tags map[string]strin
 		prefix:       prefix,
 		tags:         tags,
 		convertPaths: convertPaths,
-		filters: filters,
-
+		filters:      filters,
 	}
 }
-
-
 
 func (w *MetricWriter) Write(rq prompb.WriteRequest) {
 	for _, ts := range rq.Timeseries {
@@ -77,11 +74,11 @@ func (w *MetricWriter) buildMetricName(name string) string {
 	// No prefix should be appended to this metrics.
 	//if user by mistake just pass "key1=" we are going to let it through normal process.
 
-	if len(w.filters)!=0{
-		if val, ok := w.filters[name];ok {
-			if val != ""{
+	if len(w.filters) != 0 {
+		if val, ok := w.filters[name]; ok {
+			if val != "" {
 				return val
-			}else{
+			} else {
 				log.Debugf("filter %s came with out value, this is incorrect.", name)
 			}
 		}
