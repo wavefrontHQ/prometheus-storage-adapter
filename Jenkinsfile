@@ -12,11 +12,11 @@ pipeline {
     stages {
       stage("Build & Publish") {
         environment {
-            DOCKERHUB_CREDS=credentials('dockerhub-credential-shaoh')
+            DOCKERHUB_CREDS=credentials('Dockerhub_svcwfjenkins')
         }
         steps {
           sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
-          sh 'DOCKER_REPO=helenshao make publish'
+          sh 'make publish'
         }
       }
     }
