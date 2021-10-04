@@ -11,7 +11,7 @@ BINARY_LINUX=$(TARGET)/$(BINARY_NAME)_linux
 BINARY_DARWIN=$(TARGET)/$(BINARY_NAME)_darwin
 BINARY_WINDOWS=$(TARGET)/$(BINARY_NAME)_windows.EXE
 
-DOCKER_REPO=wavefronthq
+DOCKER_REPO?=wavefronthq
 DOCKER_IMAGE=prometheus-storage-adapter
 VERSION=1.0.3
 
