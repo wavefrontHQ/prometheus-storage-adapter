@@ -19,7 +19,7 @@ all: tidy build test
 
 .PHONY build:
 build: 
-	$(GOBUILD) -o $(BINARY_NAME) -v
+	$(GOBUILD) -o $(TARGET)/$(BINARY_NAME) -v
 
 .PHONY test:
 test: 
@@ -47,6 +47,8 @@ build-all: tidy build-linux build-darwin build-windows
 build-docker: build-linux
 	$(DOCKER) build -t $(DOCKER_REPO)/$(DOCKER_IMAGE):$(VERSION) .
 	$(DOCKER) tag $(DOCKER_REPO)/$(DOCKER_IMAGE):$(VERSION) $(DOCKER_REPO)/$(DOCKER_IMAGE):latest
+publish: build-docker
+	$(DOCKER) push $(DOCKER_REPO)/$(DOCKER_IMAGE):$(VERSION)
 release: build-all build-docker
 
 # Cross compilation
