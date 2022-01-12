@@ -14,22 +14,26 @@ import (
 )
 
 type testCase struct {
-	metric      string
-	finalMetric string
-	source      string
-	finalSource string
-	tags        []string
-	finalTags   []string
+	convertPaths bool
+	metric       string
+	finalMetric  string
+	source       string
+	finalSource  string
+	filter       map[string]string
+	tags         []string
+	finalTags    []string
 }
 
 var timestamp = int64(1146225600)
 
 var testCases = []testCase{
 	{
-		metric:      "cpu_utilization_percent",
-		finalMetric: "prom_cpu_utilization_percent",
-		source:      "localhost",
-		finalSource: "localhost",
+		convertPaths: false,
+		metric:       "cpu_utilization_percent",
+		finalMetric:  "prom_cpu_utilization_percent",
+		source:       "localhost",
+		finalSource:  "localhost",
+		filter:       make(map[string]string, 0),
 		tags: []string{
 			"bar=foo",
 			"foo=bar",
@@ -42,10 +46,12 @@ var testCases = []testCase{
 		},
 	},
 	{
-		metric:      "cpu.utilization.gigatons",
-		finalMetric: "prom_cpu.utilization.gigatons",
-		source:      "this.is.a.host.com",
-		finalSource: "this.is.a.host.com",
+		convertPaths: false,
+		metric:       "cpu.utilization.gigatons",
+		finalMetric:  "prom_cpu.utilization.gigatons",
+		source:       "this.is.a.host.com",
+		finalSource:  "this.is.a.host.com",
+		filter:       make(map[string]string, 0),
 		tags: []string{
 			"bar!foo=foo!bar",
 			"foo_bar=bar_foo",
@@ -58,10 +64,12 @@ var testCases = []testCase{
 		},
 	},
 	{
-		metric:      "Heavily!@#$%Subbed",
-		finalMetric: "prom_Heavily-----Subbed",
-		source:      "some)(*&^source",
-		finalSource: "some)(-&^source",
+		convertPaths: false,
+		metric:       "Heavily!@#$%Subbed",
+		finalMetric:  "prom_Heavily-----Subbed",
+		source:       "some)(*&^source",
+		finalSource:  "some)(-&^source",
+		filter:       make(map[string]string, 0),
 		tags: []string{
 			"bar!@#$%foo=foo!bar",
 			"foo_bar=bar_foo",
@@ -74,19 +82,47 @@ var testCases = []testCase{
 		},
 	},
 	{
-		metric:      "status_request_per_second",
-		finalMetric: "status.request_per_second",
-		source:      "some)(*&^source",
-		finalSource: "some)(-&^source",
+		convertPaths: true,
+		metric:       "status_request_per_second",
+		finalMetric:  "status.request_per_second",
+		source:       "some)(*&^source",
+		finalSource:  "some)(-&^source",
+		filter: map[string]string{
+			"status_request_per_second": "status.request_per_second",
+		},
 		tags: []string{
 			"bar!@#$%foo=foo!bar",
 			"foo_bar=bar_foo",
 			"number.of.cpus=1",
+			"asset_id=123456789",
 		},
 		finalTags: []string{
 			"\"bar-----foo\"=\"foo!bar\"",
 			"\"foo_bar\"=\"bar_foo\"",
 			"\"number.of.cpus\"=\"1\"",
+			"\"asset_id\"=\"123456789\"",
+		},
+	},
+	{
+		convertPaths: false,
+		metric:       "status.availability",
+		finalMetric:  "prom_status.availability",
+		source:       "some)(*&^source",
+		finalSource:  "some)(-&^source",
+		filter: map[string]string{
+			"status_request_per_second": "status.request_per_second",
+		},
+		tags: []string{
+			"bar!@#$%foo=foo!bar",
+			"foo_bar=bar_foo",
+			"number.of.cpus=1",
+			"asset_id=123456789",
+		},
+		finalTags: []string{
+			"\"bar-----foo\"=\"foo!bar\"",
+			"\"foo_bar\"=\"bar_foo\"",
+			"\"number.of.cpus\"=\"1\"",
+			"\"asset_id\"=\"123456789\"",
 		},
 	},
 }
@@ -124,10 +160,8 @@ func TestRoundtrips(t *testing.T) {
 			Host: "localhost", MetricsPort: 4711,
 		})
 	require.NoError(t, err)
-	w := NewMetricWriter(sender, "prom", map[string]string{}, false, map[string]string{
-		"status_request_per_second": "status.request_per_second",
-	})
 	for _, test := range testCases {
+		w := NewMetricWriter(sender, "prom", map[string]string{}, test.convertPaths, test.filter)
 		ts := prompb.TimeSeries{
 			Labels: []prompb.Label{
 				{
@@ -204,16 +238,6 @@ func TestBuildName(t *testing.T) {
 	w = NewMetricWriter(sender, "prom", map[string]string{}, false, filters)
 	name = w.buildMetricName(testName)
 	require.Equal(t, "prom_"+testName, name)
-
-	filters = map[string]string{
-		"metrics_availability":       "metrics.availability",
-		"metrics_request_per_second": "metrics.request_per_second",
-	}
-
-	//filter metrics that should not have any prefix and names would be set to custom value
-	w = NewMetricWriter(sender, "prom", map[string]string{}, true, filters)
-	name = w.buildMetricName("metrics_availability")
-	require.Equal(t, "metrics.availability", name)
 
 	//filter metrics that should  have  prefix
 	w = NewMetricWriter(sender, "prom", map[string]string{}, true, filters)

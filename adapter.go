@@ -145,6 +145,10 @@ func main() {
 		log.Fatal(err)
 		return
 	}
+
+	if len(metricsFilter.filter) == 0 {
+		metricsFilter.filter = make(map[string]string, 0)
+	}
 	mw := backend.NewMetricWriter(sender, prefix, parseTags(tags), convertPaths, metricsFilter.filter)
 
 	// Install metric receiver
