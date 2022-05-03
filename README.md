@@ -21,7 +21,9 @@ go get github.com/wavefronthq/prometheus-storage-adapter
 2. Build it:
 ```
 cd $(GOPATH)/src/github.com/wavefronthq/prometheus-storage-adapter
-make deps build
+go mod tidy
+go mod vendor
+make build
 ```
 
 ## Configuration
