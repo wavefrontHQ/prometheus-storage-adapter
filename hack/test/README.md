@@ -1,4 +1,4 @@
-# Testing Prometheus Storage Adapter for Wavefront
+# Testing Prometheus Storage Adapter for Operations for Applications
 
 1. Update proxy with YOUR_API_TOKEN and YOUR_CLUSTER in hack/test/6-wavefront-proxy.yaml.
 2. Create namespace by `kubectl create namespace monitoring`
