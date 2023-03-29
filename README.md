@@ -1,4 +1,5 @@
-# Prometheus Storage Adapter for Operations for Applications [![build status][ci-img]][ci] [![Go Report Card][go-report-img]][go-report] [![Docker Pulls][docker-pull-img]][docker-img]
+# Prometheus Storage Adapter for Operations for Applications
+[![build status][ci-img]][ci] [![Go Report Card][go-report-img]][go-report] [![Docker Pulls][docker-pull-img]][docker-img]
 
 ## Introduction
 Prometheus Storage Adapters can act as a "fork" and send data to a secondary location. This adapter simply takes the data being sent to it and forwards it to a Wavefront proxy. It is useful when you want data collected by Prometheus to be available in Operations for Applications.
@@ -85,8 +86,9 @@ remote_write:
 
 Restart Prometheus once you have saved the config file.
 
-[ci-img]: https://travis-ci.com/wavefrontHQ/prometheus-storage-adapter.svg?branch=master
-[ci]: https://travis-ci.com/wavefrontHQ/prometheus-storage-adapter
+
+[ci-img]: https://github.com/wavefrontHQ/prometheus-storage-adapter/actions/workflows/go.yml/badge.svg
+[ci]: https://github.com/wavefrontHQ/prometheus-storage-adapter/actions/workflows/go.yml
 [go-report-img]: https://goreportcard.com/badge/github.com/wavefronthq/prometheus-storage-adapter
 [go-report]: https://goreportcard.com/report/github.com/wavefronthq/prometheus-storage-adapter
 [docker-pull-img]: https://img.shields.io/docker/pulls/wavefronthq/prometheus-storage-adapter.svg?logo=docker
