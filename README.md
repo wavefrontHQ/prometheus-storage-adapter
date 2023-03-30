@@ -12,8 +12,8 @@ Refer to the [Helm chart](https://github.com/wavefrontHQ/helm#installation) to i
 ### Download Binaries
 Prebuilt binaries for Linux, macOS, and Windows are available [here](https://github.com/wavefrontHQ/prometheus-storage-adapter/releases).
 
-### Build from a Source
-To build from a source:
+### Build from Source
+To build from source:
 
 1. Download the source:
 ```
