@@ -81,21 +81,21 @@ func main() {
 	var metricsFilter metricsFilter
 
 	flag.StringVar(&prefix, "prefix", "", "Prefix for metric names. If omitted, no prefix is added.")
-	flag.StringVar(&proxy, "proxy", "", "Host address to wavefront proxy.")
+	flag.StringVar(&proxy, "proxy", "", "Host address to Wavefront proxy.")
 	flag.IntVar(&port, "proxy-port", 2878, "Proxy port.")
 	flag.StringVar(&listen, "listen", "", "Port/address to listen to on the format '[address:]port'. If no address is specified, the adapter listens to all interfaces.")
-	flag.StringVar(&tags, "tags", "", "A comma separated list of tags to be added to each point on the form \"tag1=value1,tag2=value2...\"")
-	flag.StringVar(&url, "url", "", "Wavefront URL for direct ingestion")
-	flag.StringVar(&token, "token", "", "Wavefront API token for direct ingestion")
+	flag.StringVar(&tags, "tags", "", "A comma-separated list of tags to be added to each point on the form \"tag1=value1,tag2=value2...\".")
+	flag.StringVar(&url, "url", "", "Wavefront URL for direct ingestion.")
+	flag.StringVar(&token, "token", "", "Wavefront API token for direct ingestion.")
 	debug := flag.Bool("debug", false, "Print detailed debug messages.")
-	flag.IntVar(&batchSize, "batch-size", 0, "Metric sending batch size (ignored in proxy mode)")
-	flag.IntVar(&bufferSize, "buffer-size", 0, "Metric buffer size (ignored in proxy mode)")
-	flag.IntVar(&flushInterval, "flush-interval", 0, "Metric flush interval (in seconds)")
+	flag.IntVar(&batchSize, "batch-size", 0, "Metric sending batch size (ignored in proxy mode).")
+	flag.IntVar(&bufferSize, "buffer-size", 0, "Metric buffer size (ignored in proxy mode).")
+	flag.IntVar(&flushInterval, "flush-interval", 0, "Metric flush interval (in seconds).")
 	flag.BoolVar(&convertPaths, "convert-paths", true, "Convert metric names/tags to use period instead of underscores.")
-	flag.Var(&metricsFilter, "metrics-name-override", " list of name and overrides in the format 'key1=value1, key2,value2.....'\n"+
+	flag.Var(&metricsFilter, "metrics-name-override", " list of name and overrides in the format 'key1=value1, key2,value2...'\n"+
 		" key = original name of the metrics which is coming from prometheus \n"+
 		" value =  name user wish to override with \n"+
-		" no prefix and pathConversion will be applied to these metrics")
+		" no prefix and pathConversion will be applied to these metrics.")
 
 	flag.Parse()
 
