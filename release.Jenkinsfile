@@ -15,7 +15,7 @@ pipeline {
 
     parameters {
         string(name: 'VERSION_NUMBER', defaultValue: '', description: 'The version number to release as')
-        string(name: 'TARGET_COMITISH', defaultValue: 'master', description: 'Specify a specific commit hash or branch to release the version to.')
+        string(name: 'TARGET_COMITISH', defaultValue: '', description: 'Specify a specific commit hash or branch to release the version to.')
         string(name: 'RELEASE_NOTES', defaultValue: '', description: 'The public release notes for the version. Use \\n to create newlines')
         booleanParam(name: 'IS_DRAFT', defaultValue: true, description: 'If the release should be marked as a draft (unpublished)')
         booleanParam(name: 'IS_PRERELEASE', defaultValue: false, description: 'If the release should be marked as a prerelease')
@@ -32,22 +32,28 @@ pipeline {
         }
 
         stage('Create Github Release') {
+            environment {
+              VERSION_NUMBER = "${params.VERSION_NUMBER}"
+              TARGET_COMITISH_TRIMMED = TARGET_COMITISH.minus("origin/")
+              RELEASE_NOTES = "${params.RELEASE_NOTES}"
+              IS_DRAFT = "${params.IS_DRAFT}"
+              IS_PRERELEASE = "${params.IS_PRERELEASE}"
+            }
             steps {
                 script {
                     if (params.createGithubRelease) {
-                        TARGET_COMITISH_TRIMMED = TARGET_COMITISH.minus("origin/")
-                        sh "curl -XPOST -H \"Authorization: token ${GITHUB_TOKEN}\" -H \"Accept: application/vnd.github.v3+json\" https://api.github.com/repos/wavefrontHQ/${REPO_NAME}/releases -d \'{\"tag_name\": \"${VERSION_NUMBER}\", \"target_commitish\": \"${TARGET_COMITISH_TRIMMED}\", \"body\": \"${RELEASE_NOTES}\", \"draft\": ${IS_DRAFT}, \"prerelease\": ${IS_PRERELEASE}}\'" 
+                        sh 'curl -X POST -H \"Authorization: token ${GITHUB_TOKEN}\" -H \"Accept: application/vnd.github.v3+json\" https://api.github.com/repos/wavefrontHQ/${REPO_NAME}/releases -d \"{\\"tag_name\\": \\"${VERSION_NUMBER}\\", \\"target_commitish\\": \\"${TARGET_COMITISH_TRIMMED}\\", \\"body\\": \\"${RELEASE_NOTES}\\", \\"draft\\": ${IS_DRAFT}, \\"prerelease\\": ${IS_PRERELEASE}}\" '
                     }
                 }
             }
         }
-
+        /*
         stage('Make/Push Docker Image') {
             steps {
                 script {
                     docker.withRegistry('https://projects.registry.vmware.com', 'projects-registry-vmware-tanzu_observability-robot') {
                         def harborImage = docker.build("tanzu_observability/${REPO_NAME}:${VERSION_NUMBER}")
-                        /* Push the container to the custom Registry */
+                        // Push the container to the custom Registry
                         harborImage.push()
                         harborImage.push("latest")
                     }
@@ -60,10 +66,12 @@ pipeline {
                 }
             }
         }
+        */
     }
     
     post {
       // Notify only on null->failure or success->failure or any->success
+      /*
       failure {
         script {
           if(currentBuild.previousBuild == null) {
@@ -79,6 +87,7 @@ pipeline {
           slackSend (channel: '#tobs-k8po-team', color: '#008000', message: "Success!! `prometheus-storage-adapter:${VERSION_NUMBER}` released!")
         }
       }
+      */
       always {
         cleanWs()
       }
