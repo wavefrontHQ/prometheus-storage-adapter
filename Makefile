@@ -13,7 +13,9 @@ BINARY_WINDOWS=$(TARGET)/$(BINARY_NAME)_windows.EXE
 
 DOCKER_REPO=wavefronthq
 DOCKER_IMAGE=prometheus-storage-adapter
-VERSION=1.0.6
+# Represents the upcoming version
+# IMPORTANT: This is also overwritten by the release pipeline build with parameters
+VERSION?=1.0.9
 
 all: tidy build test
 
