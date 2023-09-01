@@ -17,7 +17,7 @@ pipeline {
         string(name: 'VERSION_NUMBER', defaultValue: '', description: 'The version number to release as')
         string(name: 'TARGET_COMITISH', defaultValue: 'master', description: 'Specify a specific commit hash or branch to release the version to.')
         string(name: 'RELEASE_NOTES', defaultValue: '', description: 'The public release notes for the version. Use \\n to create newlines')
-        booleanParam(name: 'IS_DRAFT', defaultValue: false, description: 'If the release should be marked as a draft (unpublished)')
+        booleanParam(name: 'IS_DRAFT', defaultValue: true, description: 'If the release should be marked as a draft (unpublished)')
         booleanParam(name: 'IS_PRERELEASE', defaultValue: false, description: 'If the release should be marked as a prerelease')
         booleanParam(name: 'createGithubRelease', defaultValue: true, description: 'Mark as false if you only want to build/push docker images. Note: a tag specified by the name VERSION_NUMBER must be created in the repo already for this option to be turned off')
     }
