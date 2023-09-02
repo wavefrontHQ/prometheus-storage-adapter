@@ -47,7 +47,7 @@ pipeline {
                 sh 'curl -X POST -H \"Authorization: token ${GITHUB_TOKEN}\" -H \"Accept: application/vnd.github.v3+json\" https://api.github.com/repos/wavefrontHQ/${REPO_NAME}/releases -d \"{\\"tag_name\\": \\"${VERSION_NUMBER}\\", \\"target_commitish\\": \\"${TARGET_COMITISH_TRIMMED}\\", \\"name\\": \\"Release ${VERSION_NUMBER}\\", \\"body\\": \\"${RELEASE_NOTES}\\", \\"draft\\": ${IS_DRAFT}, \\"prerelease\\": ${IS_PRERELEASE}}\" '
             }
         }
-        /*
+
         stage('Make/Push Docker Image') {
             steps {
                 script {
@@ -65,12 +65,10 @@ pipeline {
                 }
             }
         }
-        */
     }
 
     post {
       // Notify only on null->failure or success->failure or any->success
-      /*
       failure {
         script {
           if(currentBuild.previousBuild == null) {
@@ -86,7 +84,6 @@ pipeline {
           slackSend (channel: '#tobs-k8po-team', color: '#008000', message: "Success!! `prometheus-storage-adapter:${VERSION_NUMBER}` released!")
         }
       }
-      */
       always {
         cleanWs()
       }
