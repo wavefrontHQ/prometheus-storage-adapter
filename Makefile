@@ -15,7 +15,7 @@ DOCKER_REPO=wavefronthq
 DOCKER_IMAGE=prometheus-storage-adapter
 # Represents the upcoming version
 # IMPORTANT: This is also overwritten by the release pipeline build with parameters
-VERSION?=1.0.9
+VERSION?=1.0.10
 
 all: tidy build test
 
