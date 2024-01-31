@@ -13,25 +13,27 @@ import (
 )
 
 type MetricWriter struct {
-	prefix       string
-	tags         map[string]string
-	sender       senders.Sender
-	convertPaths bool
-	metricsSent  int64
-	numErrors    int64
-	errorRate    float64
-	filters      map[string]string
+	prefix          string
+	tags            map[string]string
+	sender          senders.Sender
+	convertPaths    bool
+	convertTagPaths bool
+	metricsSent     int64
+	numErrors       int64
+	errorRate       float64
+	filters         map[string]string
 }
 
 var tagValueReplacer = strings.NewReplacer("\"", "\\\"", "*", "-")
 
-func NewMetricWriter(sender senders.Sender, prefix string, tags map[string]string, convertPaths bool, filters map[string]string) *MetricWriter {
+func NewMetricWriter(sender senders.Sender, prefix string, tags map[string]string, convertPaths bool, convertTagPaths bool, filters map[string]string) *MetricWriter {
 	return &MetricWriter{
-		sender:       sender,
-		prefix:       prefix,
-		tags:         tags,
-		convertPaths: convertPaths,
-		filters:      filters,
+		sender:          sender,
+		prefix:          prefix,
+		tags:            tags,
+		convertPaths:    convertPaths,
+		convertTagPaths: convertTagPaths,
+		filters:         filters,
 	}
 }
 
@@ -94,7 +96,7 @@ func (w *MetricWriter) buildMetricName(name string) string {
 }
 
 func (w *MetricWriter) buildTagName(name string) string {
-	if name != "__name__" && w.convertPaths {
+	if name != "__name__" && w.convertTagPaths {
 		name = strings.Replace(name, "_", ".", -1)
 	}
 	return name
