@@ -124,7 +124,7 @@ func TestRoundtrips(t *testing.T) {
 			Host: "localhost", MetricsPort: 4711,
 		})
 	require.NoError(t, err)
-	w := NewMetricWriter(sender, "prom", map[string]string{}, false, map[string]string{
+	w := NewMetricWriter(sender, "prom", map[string]string{}, false, false, map[string]string{
 		"status_request_per_second": "status.request_per_second",
 	})
 	for _, test := range testCases {
@@ -186,22 +186,22 @@ func TestBuildName(t *testing.T) {
 	testName := "metric_name_with_underscore"
 	filters := make(map[string]string, 0)
 	// empty prefix and convert=true
-	w := NewMetricWriter(sender, "", map[string]string{}, true, filters)
+	w := NewMetricWriter(sender, "", map[string]string{}, true, true, filters)
 	name := w.buildMetricName(testName)
 	require.Equal(t, "metric.name.with.underscore", name)
 
 	// empty prefix and convert=false
-	w = NewMetricWriter(sender, "", map[string]string{}, false, filters)
+	w = NewMetricWriter(sender, "", map[string]string{}, false, false, filters)
 	name = w.buildMetricName(testName)
 	require.Equal(t, testName, name)
 
 	// non-empty prefix and convert=true
-	w = NewMetricWriter(sender, "prom", map[string]string{}, true, filters)
+	w = NewMetricWriter(sender, "prom", map[string]string{}, true, true, filters)
 	name = w.buildMetricName(testName)
 	require.Equal(t, "prom.metric.name.with.underscore", name)
 
 	// non-empty prefix and convert=false
-	w = NewMetricWriter(sender, "prom", map[string]string{}, false, filters)
+	w = NewMetricWriter(sender, "prom", map[string]string{}, false, false, filters)
 	name = w.buildMetricName(testName)
 	require.Equal(t, "prom_"+testName, name)
 
@@ -211,13 +211,41 @@ func TestBuildName(t *testing.T) {
 	}
 
 	//filter metrics that should not have any prefix and names would be set to custom value
-	w = NewMetricWriter(sender, "prom", map[string]string{}, true, filters)
+	w = NewMetricWriter(sender, "prom", map[string]string{}, true, true, filters)
 	name = w.buildMetricName("metrics_availability")
 	require.Equal(t, "metrics.availability", name)
 
 	//filter metrics that should  have  prefix
-	w = NewMetricWriter(sender, "prom", map[string]string{}, true, filters)
+	w = NewMetricWriter(sender, "prom", map[string]string{}, true, true, filters)
 	name = w.buildMetricName("metrics_availability_1")
 	require.Equal(t, "prom.metrics.availability.1", name)
 
+	testTagName := "tag_name_with_underscore"
+	// empty prefix, convertPaths=true and convertTagPaths=true
+	w = NewMetricWriter(sender, "", map[string]string{}, true, true, filters)
+	name = w.buildMetricName(testName)
+	tag := w.buildTagName(testTagName)
+	require.Equal(t, "metric.name.with.underscore", name)
+	require.Equal(t, "tag.name.with.underscore", tag)
+
+	// empty prefix, convertPaths=true and convertTagPaths=false
+	w = NewMetricWriter(sender, "", map[string]string{}, true, false, filters)
+	name = w.buildMetricName(testName)
+	tag = w.buildTagName(testTagName)
+	require.Equal(t, "metric.name.with.underscore", name)
+	require.Equal(t, testTagName, tag)
+
+	// empty prefix, convertPaths=false and convertTagPaths=true
+	w = NewMetricWriter(sender, "", map[string]string{}, false, true, filters)
+	name = w.buildMetricName(testName)
+	tag = w.buildTagName(testTagName)
+	require.Equal(t, testName, name)
+	require.Equal(t, "tag.name.with.underscore", tag)
+
+	// empty prefix, convertPaths=false and convertTagPaths=false
+	w = NewMetricWriter(sender, "", map[string]string{}, false, false, filters)
+	name = w.buildMetricName(testName)
+	tag = w.buildTagName(testTagName)
+	require.Equal(t, testName, name)
+	require.Equal(t, testTagName, tag)
 }

@@ -37,7 +37,7 @@ func parseTags(s string) map[string]string {
 	return tags
 }
 
-//struct to define the custom type to handle the arguments in key=value pair format.
+// struct to define the custom type to handle the arguments in key=value pair format.
 type metricsFilter struct {
 	filter map[string]string
 }
@@ -78,6 +78,7 @@ func main() {
 	var bufferSize int
 	var flushInterval int
 	var convertPaths bool
+	var convertTagPaths bool
 	var metricsFilter metricsFilter
 
 	flag.StringVar(&prefix, "prefix", "", "Prefix for metric names. If omitted, no prefix is added.")
@@ -91,7 +92,8 @@ func main() {
 	flag.IntVar(&batchSize, "batch-size", 0, "Metric sending batch size (ignored in proxy mode).")
 	flag.IntVar(&bufferSize, "buffer-size", 0, "Metric buffer size (ignored in proxy mode).")
 	flag.IntVar(&flushInterval, "flush-interval", 0, "Metric flush interval (in seconds).")
-	flag.BoolVar(&convertPaths, "convert-paths", true, "Convert metric names/tags to use period instead of underscores.")
+	flag.BoolVar(&convertPaths, "convert-paths", true, "Convert metric names to use period instead of underscores.")
+	flag.BoolVar(&convertTagPaths, "convert-tag-paths", true, "Convert metric tags to use period instead of underscores.")
 	flag.Var(&metricsFilter, "metrics-name-override", " list of name and overrides in the format 'key1=value1, key2,value2...'\n"+
 		" key = original name of the metrics which is coming from prometheus \n"+
 		" value =  name user wish to override with \n"+
@@ -145,7 +147,7 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-	mw := backend.NewMetricWriter(sender, prefix, parseTags(tags), convertPaths, metricsFilter.filter)
+	mw := backend.NewMetricWriter(sender, prefix, parseTags(tags), convertPaths, convertTagPaths, metricsFilter.filter)
 
 	// Install metric receiver
 	http.HandleFunc("/receive", func(w http.ResponseWriter, r *http.Request) {

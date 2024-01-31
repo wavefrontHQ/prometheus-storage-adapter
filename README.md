@@ -35,7 +35,9 @@ The adapter takes the following parameters:
 -buffer-size int
     Metric buffer size (ignored in proxy mode).
 -convert-paths
-    Convert metric names/tags to use period instead of underscores. (default true)
+    Convert metric names to use period instead of underscores. (default true)
+-convert-tag-paths
+    Convert metric tags to use period instead of underscores. (default true)
 -debug
     Print detailed debug messages.
 -flush-interval int
@@ -44,8 +46,8 @@ The adapter takes the following parameters:
     Port/address to listen to on the format '[address:]port'. If no address is specified, the adapter listens to all interfaces.
 -metrics-name-override value
      list of name and overrides in the format 'key1=value1, key2,value2...'
-     key = original name of the metrics which is coming from prometheus 
-     value =  name user wish to override with 
+     key = original name of the metrics which is coming from prometheus
+     value =  name user wish to override with
      no prefix and pathConversion will be applied to these metrics.
 -prefix string
     Prefix for metric names. If omitted, no prefix is added.
@@ -72,7 +74,7 @@ The adapter is available as a Docker image.
 
 To run it as a Docker container with the parameters discussed above:
 ```
-docker run wavefronthq/prometheus-storage-adapter -proxy=localhost -proxy-port=2878 -listen=1234 -prefix=prom -convert-paths=true
+docker run wavefronthq/prometheus-storage-adapter -proxy=localhost -proxy-port=2878 -listen=1234 -prefix=prom -convert-paths=true -convert-tag-paths=true
 ```
 
 ## Integrating with Prometheus
